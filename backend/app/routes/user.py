@@ -32,14 +32,10 @@ def update_profile():
         return validation_error_response(err)
 
     full_name = validated.get("full_name")
-    phone = validated.get("phone")
     country = validated.get("country")
 
     if full_name is not None:
         user.full_name = full_name
-
-    if phone is not None:
-        user.phone = phone
 
     if country is not None:
         user.country = country

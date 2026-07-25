@@ -21,7 +21,6 @@ def register():
 
     full_name = validated["full_name"]
     email = validated["email"]
-    phone = validated.get("phone")
     password = validated["password"]
     role = validated.get("role", "diaspora")
     country = validated.get("country")
@@ -40,7 +39,6 @@ def register():
         user = User(
             full_name=full_name,
             email=email,
-            phone=phone,
             role=role,
             country=country,
         )

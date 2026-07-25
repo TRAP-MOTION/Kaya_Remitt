@@ -14,7 +14,6 @@ class User(db.Model):
     user_id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
     full_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False, index=True)
-    phone = db.Column(db.String(20), nullable=True)
     password_hash = db.Column(db.Text, nullable=False)
     role = db.Column(db.String(20), nullable=False, default="diaspora")
     country = db.Column(db.String(100), nullable=True)
@@ -49,7 +48,6 @@ class User(db.Model):
             "user_id": self.user_id,
             "full_name": self.full_name,
             "email": self.email,
-            "phone": self.phone,
             "role": self.role,
             "country": self.country,
             "created_at": formatted_date,

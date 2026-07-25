@@ -15,9 +15,6 @@ VOUCHER_IDENTIFIER_RE = (
     r")$"
 )
 
-PHONE_RE = r"^\+[1-9]\d{7,18}$"
-
-
 def strip_string_fields(data, keys):
     """Return a shallow copy with listed string fields stripped."""
     if not isinstance(data, dict):

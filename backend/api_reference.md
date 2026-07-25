@@ -65,7 +65,6 @@ POST /api/v1/auth/register
 {
   "full_name": "John Banda",
   "email": "john@example.com",
-  "phone": "+265991234567",
   "password": "password123",
   "role": "diaspora"
 }
