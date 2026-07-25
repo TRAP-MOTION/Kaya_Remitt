@@ -30,6 +30,7 @@ def register():
     email = str(validated["email"]).strip().lower()
     phone = str(validated["phone"]).strip()
     password = str(validated["password"])
+    role = str(validated.get("role", "diaspora"))
 
     # Check if email is already taken
     existing_email = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
@@ -53,7 +54,8 @@ def register():
         user = User(
             full_name=full_name,
             email=email,
-            phone=phone
+            phone=phone,
+            role=role
         )
         user.set_password(password)
         db.session.add(user)
@@ -66,12 +68,10 @@ def register():
 
         return jsonify({
             "success": True,
-            "message": "User registered successfully.",
+            "message": "Account created successfully.",
             "data": {
                 "user_id": user.id,
-                "full_name": user.full_name,
-                "email": user.email,
-                "phone": user.phone
+                "role": user.role
             }
         }), 201
     except Exception as e:

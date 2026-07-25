@@ -6,6 +6,7 @@ class RegisterSchema(Schema):
     email = fields.Email(required=True)
     phone = fields.String(required=True, validate=validate.Length(min=8, max=30))
     password = fields.String(required=True, validate=validate.Length(min=6, max=128))
+    role = fields.String(load_default="diaspora", validate=validate.OneOf(["diaspora", "merchant"]))
 
     @validates("full_name")
     def validate_full_name(self, value):

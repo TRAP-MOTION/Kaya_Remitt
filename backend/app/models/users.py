@@ -15,8 +15,9 @@ class User(db.Model):
     phone = db.Column(db.String(30), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     transaction_pin_hash = db.Column(db.String(255), nullable=True)
+    role = db.Column(db.String(50), nullable=False, default="diaspora")
     kyc_status = db.Column(db.String(20), nullable=False, default="UNVERIFIED")
-    created_at = db.Column(db.DateTime,nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     wallet = db.relationship("Wallet", backref="user", uselist=False, cascade="all, delete-orphan")
@@ -53,6 +54,7 @@ class User(db.Model):
             "full_name": self.full_name,
             "email": self.email,
             "phone": self.phone,
+            "role": self.role,
             "kyc_status": self.kyc_status,
             "has_pin": self.has_pin,
             "created_at": formatted_date
