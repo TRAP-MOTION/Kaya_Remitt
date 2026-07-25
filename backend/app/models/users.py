@@ -19,7 +19,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime,nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
-    # wallet = db.relationship("Wallet", backref="user", uselist=False, cascade="all, delete-orphan")
+    wallet = db.relationship("Wallet", backref="user", uselist=False, cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
