@@ -1,7 +1,8 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, jsonify, g
 from marshmallow import ValidationError
 from backend.app.extensions import db
 from backend.app.utils.auth import token_required
+from backend.app.utils.validation import load_json, validation_error_response
 from backend.app.schemas.user_schema import UpdateProfileSchema
 
 user_bp = Blueprint("user", __name__)
@@ -24,30 +25,24 @@ def get_profile():
 @token_required
 def update_profile():
     user = g.current_user
-    data = request.get_json() or {}
 
     try:
-        validated = _update_profile_schema.load(data)
+        validated = load_json(_update_profile_schema)
     except ValidationError as err:
-        first_msg = next(iter(err.messages.values()))[0]
-        return jsonify({
-            "success": False,
-            "reason": "INVALID_INPUT",
-            "message": first_msg
-        }), 400
+        return validation_error_response(err)
 
     full_name = validated.get("full_name")
     phone = validated.get("phone")
     country = validated.get("country")
 
     if full_name is not None:
-        user.full_name = str(full_name).strip()
+        user.full_name = full_name
 
     if phone is not None:
-        user.phone = str(phone).strip()
+        user.phone = phone
 
     if country is not None:
-        user.country = str(country).strip() or None
+        user.country = country
 
     try:
         db.session.commit()

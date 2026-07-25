@@ -1,10 +1,15 @@
 from flask import Blueprint, jsonify
+from marshmallow import ValidationError
 from backend.app.extensions import db
 from backend.app.models.merchant import Merchant
 from backend.app.models.service import Service
 from backend.app.utils.auth import token_required
+from backend.app.utils.validation import load_path, validation_error_response
+from backend.app.schemas.common import MerchantIdPathSchema
 
 merchants_bp = Blueprint("merchants", __name__)
+
+_merchant_id_schema = MerchantIdPathSchema()
 
 
 @merchants_bp.route("", methods=["GET"], strict_slashes=False)
@@ -28,7 +33,12 @@ def get_merchants():
 @token_required
 def get_merchant(merchant_id):
     """GET /api/v1/merchants/{merchant_id} — Returns merchant detail + services."""
-    merchant = db.session.get(Merchant, merchant_id)
+    try:
+        params = load_path(_merchant_id_schema, merchant_id=merchant_id)
+    except ValidationError as err:
+        return validation_error_response(err)
+
+    merchant = db.session.get(Merchant, params["merchant_id"])
 
     if not merchant or not merchant.verified:
         return jsonify({
@@ -46,6 +56,12 @@ def get_merchant(merchant_id):
 @token_required
 def get_merchant_services(merchant_id):
     """GET /api/v1/merchants/{merchant_id}/services — Returns services for a merchant."""
+    try:
+        params = load_path(_merchant_id_schema, merchant_id=merchant_id)
+    except ValidationError as err:
+        return validation_error_response(err)
+
+    merchant_id = params["merchant_id"]
     merchant = db.session.get(Merchant, merchant_id)
 
     if not merchant or not merchant.verified:
