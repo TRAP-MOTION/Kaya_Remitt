@@ -1,13 +1,21 @@
 from datetime import datetime, timezone
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, jsonify, g
+from marshmallow import ValidationError
 from backend.app.extensions import db
 from backend.app.models.payment import Payment
 from backend.app.models.voucher import Voucher
 from backend.app.models.transaction import Transaction
 from backend.app.models.notification import Notification
 from backend.app.utils.auth import token_required
+from backend.app.utils.validation import load_json, load_path, validation_error_response
+from backend.app.schemas.voucher_schema import GenerateVoucherSchema, VerifyVoucherSchema
+from backend.app.schemas.common import VoucherIdPathSchema
 
 vouchers_bp = Blueprint("vouchers", __name__)
+
+_generate_voucher_schema = GenerateVoucherSchema()
+_verify_voucher_schema = VerifyVoucherSchema()
+_voucher_id_path_schema = VoucherIdPathSchema()
 
 
 def _find_voucher(voucher_identifier):
@@ -26,14 +34,13 @@ def _find_voucher(voucher_identifier):
 def generate_voucher():
     """POST /api/v1/vouchers — Generates a digital voucher after a successful payment."""
     user = g.current_user
-    data = request.get_json() or {}
 
-    payment_id = data.get("payment_id")
-    if not payment_id:
-        return jsonify({
-            "success": False,
-            "message": "payment_id is required."
-        }), 400
+    try:
+        validated = load_json(_generate_voucher_schema)
+    except ValidationError as err:
+        return validation_error_response(err)
+
+    payment_id = validated["payment_id"]
 
     payment = db.session.execute(
         db.select(Payment).filter_by(payment_id=payment_id, user_id=user.user_id)
@@ -98,16 +105,12 @@ def generate_voucher():
 @token_required
 def verify_voucher():
     """POST /api/v1/vouchers/verify — Allows merchants to check whether a voucher is valid."""
-    data = request.get_json() or {}
+    try:
+        validated = load_json(_verify_voucher_schema)
+    except ValidationError as err:
+        return validation_error_response(err)
 
-    voucher_id = data.get("voucher_id")
-    if not voucher_id:
-        return jsonify({
-            "success": False,
-            "message": "voucher_id is required."
-        }), 400
-
-    voucher = _find_voucher(voucher_id)
+    voucher = _find_voucher(validated["voucher_id"])
 
     if not voucher:
         return jsonify({
@@ -149,7 +152,13 @@ def verify_voucher():
 def redeem_voucher(voucher_id):
     """PATCH /api/v1/vouchers/{voucher_id}/redeem — Marks a voucher as used."""
     user = g.current_user
-    voucher = _find_voucher(voucher_id)
+
+    try:
+        params = load_path(_voucher_id_path_schema, voucher_id=voucher_id)
+    except ValidationError as err:
+        return validation_error_response(err)
+
+    voucher = _find_voucher(params["voucher_id"])
 
     if not voucher:
         return jsonify({

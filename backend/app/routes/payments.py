@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, jsonify, g
+from marshmallow import ValidationError
 from backend.app.extensions import db
 from backend.app.models.merchant import Merchant
 from backend.app.models.service import Service
@@ -6,8 +7,12 @@ from backend.app.models.payment import Payment
 from backend.app.models.transaction import Transaction
 from backend.app.models.notification import Notification
 from backend.app.utils.auth import token_required
+from backend.app.utils.validation import load_json, validation_error_response
+from backend.app.schemas.payment_schema import CreatePaymentSchema
 
 payments_bp = Blueprint("payments", __name__)
+
+_create_payment_schema = CreatePaymentSchema()
 
 
 @payments_bp.route("", methods=["POST"], strict_slashes=False)
@@ -16,28 +21,16 @@ payments_bp = Blueprint("payments", __name__)
 def create_payment():
     """POST /api/v1/payments — Creates a payment for a merchant service."""
     user = g.current_user
-    data = request.get_json() or {}
-
-    merchant_id = data.get("merchant_id")
-    service_id = data.get("service_id")
-    beneficiary_name = data.get("beneficiary_name")
-    amount = data.get("amount")
-
-    if not all([merchant_id, service_id, beneficiary_name, amount is not None]):
-        return jsonify({
-            "success": False,
-            "message": "merchant_id, service_id, beneficiary_name, and amount are required."
-        }), 400
 
     try:
-        amount = float(amount)
-        if amount <= 0:
-            raise ValueError()
-    except (ValueError, TypeError):
-        return jsonify({
-            "success": False,
-            "message": "amount must be a positive number."
-        }), 400
+        validated = load_json(_create_payment_schema)
+    except ValidationError as err:
+        return validation_error_response(err)
+
+    merchant_id = validated["merchant_id"]
+    service_id = validated["service_id"]
+    beneficiary_name = validated["beneficiary_name"]
+    amount = validated["amount"]
 
     merchant = db.session.get(Merchant, merchant_id)
     if not merchant or not merchant.verified:
@@ -65,7 +58,7 @@ def create_payment():
             user_id=user.user_id,
             merchant_id=merchant_id,
             service_id=service_id,
-            beneficiary_name=str(beneficiary_name).strip(),
+            beneficiary_name=beneficiary_name,
             amount=amount,
             payment_status="COMPLETED",
         )
@@ -82,7 +75,7 @@ def create_payment():
             user_id=user.user_id,
             title="Payment Created",
             message=(
-                f"Your payment of {amount:,.2f} to {merchant.business_name} "
+                f"Your payment of {float(amount):,.2f} to {merchant.business_name} "
                 f"for {beneficiary_name} was created successfully."
             ),
         ))

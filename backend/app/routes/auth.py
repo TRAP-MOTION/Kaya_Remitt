@@ -1,8 +1,9 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify
 from marshmallow import ValidationError
 from backend.app.extensions import db
 from backend.app.models.users import User
 from backend.app.utils.auth import generate_token
+from backend.app.utils.validation import load_json, validation_error_response
 from backend.app.schemas.auth_schema import RegisterSchema, LoginSchema
 
 auth_bp = Blueprint("auth", __name__)
@@ -13,26 +14,16 @@ _login_schema = LoginSchema()
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
-    data = request.get_json() or {}
-
     try:
-        validated = _register_schema.load(data)
+        validated = load_json(_register_schema)
     except ValidationError as err:
-        first_msg = next(iter(err.messages.values()))[0]
-        return jsonify({
-            "success": False,
-            "reason": "INVALID_INPUT",
-            "message": first_msg
-        }), 400
+        return validation_error_response(err)
 
-    full_name = str(validated["full_name"]).strip()
-    email = str(validated["email"]).strip().lower()
-    phone = str(validated["phone"]).strip()
-    password = str(validated["password"])
-    role = str(validated.get("role", "diaspora"))
+    full_name = validated["full_name"]
+    email = validated["email"]
+    password = validated["password"]
+    role = validated.get("role", "diaspora")
     country = validated.get("country")
-    if country is not None:
-        country = str(country).strip() or None
 
     existing_email = db.session.execute(
         db.select(User).filter_by(email=email)
@@ -48,7 +39,6 @@ def register():
         user = User(
             full_name=full_name,
             email=email,
-            phone=phone,
             role=role,
             country=country,
         )
@@ -75,20 +65,13 @@ def register():
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
-    data = request.get_json() or {}
-
     try:
-        validated = _login_schema.load(data)
+        validated = load_json(_login_schema)
     except ValidationError as err:
-        first_msg = next(iter(err.messages.values()))[0]
-        return jsonify({
-            "success": False,
-            "reason": "INVALID_INPUT",
-            "message": first_msg
-        }), 400
+        return validation_error_response(err)
 
-    email = str(validated["email"]).strip().lower()
-    password = str(validated["password"])
+    email = validated["email"]
+    password = validated["password"]
 
     user = db.session.execute(
         db.select(User).filter_by(email=email)
