@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KayaRemit - Security</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: #F8FAFC; color: #111; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+    
+    .illustration { 
+      width: 300px; 
+      height: 300px; 
+      margin-bottom: 30px;
+    }
+    .illustration img { width: 100%; height: 100%; object-fit: contain; }
+
+    h1 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+    p { font-size: 16px; color: #64748B; max-width: 320px; line-height: 1.5; margin-bottom: 40px; }
+    
+    .dots { display: flex; gap: 10px; margin-bottom: 30px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #22C55E; background: white; }
+    .dot.active { background: #22C55E; }
+    
+    .btn { 
+      background: #22C55E; 
+      color: white; 
+      padding: 16px; 
+      width: 90%; 
+      max-width: 350px;
+      border-radius: 16px; 
+      font-weight: 700; 
+      border: none; 
+      font-size: 16px; 
+      cursor: pointer; 
+    }
+    .btn:active { transform: scale(0.98); }
+  </style>
+</head>
+<body>
+  <div class="illustration">
+    <img src="assets/onboarding3.jpeg" alt="Bank Level Security">
+  </div>
+
+  <h1>Bank-Level Security</h1>
+  <p>Your money is protected with<br>PIN + biometric login</p>
+  
+  <div class="dots">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot active"></div>
+  </div>
+  
+  <button class="btn" onclick="window.location.href='register.html'">Get started</button>
+</body>
+</html>
