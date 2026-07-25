@@ -13,14 +13,28 @@ Prototype under development.
 
 ## Main Features
 
-- User authentication
-- Financial dashboard
-- Transaction tracking
-- Budget management
-- Savings goals
-- Spending analytics
-- User settings
+-User authentication
+-Financial dashboard
+-Transaction tracking
+-Budget management
+-Savings goals
+-Spending analytics
+-User settings
 
 ## Team
 
 A multidisciplinary team working on design, research, development, and communication.
+
+## Tech Stack
+
+Frontend
+   -PHP
+   -JavaScript (React framework)
+
+Backend
+   -Python
+
+Deliverables / Links
+    -[Pitch Deck](link)
+    -[Business Model](link) 
+    -[Demo Video](link)
