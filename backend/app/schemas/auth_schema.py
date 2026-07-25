@@ -1,11 +1,16 @@
 from marshmallow import Schema, fields, validate, validates, ValidationError
-import re
+
 
 class RegisterSchema(Schema):
     full_name = fields.String(required=True, validate=validate.Length(min=1, max=100))
     email = fields.Email(required=True)
-    phone = fields.String(required=True, validate=validate.Length(min=8, max=30))
+    phone = fields.String(required=True, validate=validate.Length(min=8, max=20))
     password = fields.String(required=True, validate=validate.Length(min=6, max=128))
+    role = fields.String(
+        load_default="diaspora",
+        validate=validate.OneOf(["diaspora", "merchant"]),
+    )
+    country = fields.String(load_default=None, validate=validate.Length(min=1, max=100))
 
     @validates("full_name")
     def validate_full_name(self, value):
@@ -16,12 +21,15 @@ class RegisterSchema(Schema):
     @validates("phone")
     def validate_phone(self, value):
         if not value.strip().startswith("+"):
-            raise ValidationError("Phone number must start with '+' followed by country code and local number.")
+            raise ValidationError(
+                "Phone number must start with '+' followed by country code and local number."
+            )
         return value.strip()
 
     @validates("email")
     def validate_email_strip(self, value):
         return value.strip().lower()
+
 
 class LoginSchema(Schema):
     email = fields.Email(required=True)
