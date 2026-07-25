@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KayaRemit</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .fade-in { 
+      animation: fadeIn 1s ease-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #2563eb;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    .tagline {
+      color: #4b5563;
+      font-size: 18px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="fade-in">
+    <!-- LOGO -->
+    <img src="assets/logo.jpeg" alt="KayaRemit Logo" style="width: 192px; height: auto;">
+    
+    <!-- TAGLINE -->
+    <p class="tagline">Send Money. Zero fees. Instantly.</p>
+    
+    <!-- LOADER -->
+    <div class="spinner"></div>
+  </div>
+
+  <script>
+    // Auto redirect to onboarding after 3 seconds
+    setTimeout(() => {
+      window.location.href = "onboarding1.html";
+    }, 3000);
+  </script>
+</body>
+</html>
