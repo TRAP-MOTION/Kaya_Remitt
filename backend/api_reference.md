@@ -1,14 +1,32 @@
 # KayaRemit API Documentation
 
-This document provides the REST API specification for **KayaRemit**. The API uses standard HTTP methods, RESTful endpoint design, and a consistent response format across all endpoints.
+## Overview
+
+The KayaRemit API provides backend services for the Direct-to-Merchant Diaspora Payment Platform.
+
+The API allows diaspora users to create accounts, browse verified merchants, select services, create payments, generate digital vouchers, and enable merchants to verify transactions.
+
+## Base URL
+
+```
+/api/v1
+```
+
+## Authentication
+
+Protected endpoints require JWT authentication.
+
+Header:
+
+```http
+Authorization: Bearer <access_token>
+```
 
 ---
 
-# General Response Standard
+# Response Format
 
 ## Success Response
-
-**HTTP Status:** `200 OK`, `201 Created`
 
 ```json
 {
@@ -18,56 +36,50 @@ This document provides the REST API specification for **KayaRemit**. The API use
 }
 ```
 
----
-
 ## Error Response
-
-**HTTP Status:** `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `500 Internal Server Error`
 
 ```json
 {
   "success": false,
-  "reason": "INVALID_CREDENTIALS",
-  "message": "The email or password provided is incorrect."
+  "message": "An error occurred."
 }
 ```
 
 ---
 
-# 1. User Authentication & Profile Management
+# 1. Authentication
 
 ## Register User
 
-**Endpoint**
+Creates a new KayaRemit account.
+
+### Endpoint
 
 ```http
 POST /api/v1/auth/register
 ```
 
-Registers a new user account.
-
 ### Request Body
 
 ```json
 {
-  "full_name": "Donald Banda",
-  "email": "donald@example.com",
+  "full_name": "John Banda",
+  "email": "john@example.com",
   "phone": "+265991234567",
-  "password": "SecurePassword123!"
+  "password": "password123",
+  "role": "diaspora"
 }
 ```
 
-### Success Response (201 Created)
+### Response
 
 ```json
 {
   "success": true,
-  "message": "User registered successfully.",
+  "message": "Account created successfully.",
   "data": {
-    "user_id": "usr_987654321",
-    "full_name": "Donald Banda",
-    "email": "donald@example.com",
-    "phone": "+265991234567"
+    "user_id": "USR001",
+    "role": "diaspora"
   }
 }
 ```
@@ -76,491 +88,389 @@ Registers a new user account.
 
 ## Login
 
-**Endpoint**
+Authenticates a user and provides access to the platform.
+
+### Endpoint
 
 ```http
 POST /api/v1/auth/login
 ```
 
-Authenticates a user and returns an access token.
-
 ### Request Body
 
 ```json
 {
-  "email": "donald@example.com",
-  "password": "SecurePassword123!"
+  "email": "john@example.com",
+  "password": "password123"
 }
 ```
 
-### Success Response (200 OK)
+### Response
 
 ```json
 {
   "success": true,
   "message": "Login successful.",
   "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsIn...",
-    "user": {
-      "user_id": "usr_987654321",
-      "full_name": "Donald Banda",
-      "email": "donald@example.com"
-    }
+    "token": "jwt_token_here"
   }
 }
 ```
 
 ---
 
-## Get User Profile
+# 2. Merchant Management
 
-**Endpoint**
+## Get Verified Merchants
+
+Returns a list of available verified merchants.
+
+### Endpoint
 
 ```http
-GET /api/v1/user/profile
+GET /api/v1/merchants
 ```
 
-Retrieves the authenticated user's profile.
-
-### Headers
-
-```text
-Authorization: Bearer <token>
-```
-
-### Success Response (200 OK)
+### Response
 
 ```json
 {
   "success": true,
-  "message": "Profile retrieved successfully.",
+  "data": [
+    {
+      "merchant_id": "MER001",
+      "business_name": "Chipiku Plus",
+      "category": "Groceries",
+      "location": "Lilongwe",
+      "verified": true
+    }
+  ]
+}
+```
+
+---
+
+## Get Merchant Details
+
+Retrieves details of a specific merchant.
+
+### Endpoint
+
+```http
+GET /api/v1/merchants/{merchant_id}
+```
+
+### Response
+
+```json
+{
+  "success": true,
   "data": {
-    "user_id": "usr_987654321",
-    "full_name": "Donald Banda",
-    "email": "donald@example.com",
-    "phone": "+265991234567",
-    "kyc_status": "VERIFIED",
-    "created_at": "2026-07-21T08:00:00Z"
+    "merchant_id": "MER001",
+    "business_name": "Chipiku Plus",
+    "services": [
+      {
+        "name": "Grocery Package",
+        "price": 50000
+      }
+    ]
   }
 }
+```
+
+---
+
+# 3. Services
+
+## Get Merchant Services
+
+Returns available products or services from a merchant.
+
+### Endpoint
+
+```http
+GET /api/v1/merchants/{merchant_id}/services
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "service_id": "SER001",
+      "name": "Grocery Package",
+      "amount": 50000
+    }
+  ]
+}
+```
+
+---
+
+# 4. Payments
+
+## Create Payment
+
+Creates a payment request for a selected merchant service.
+
+### Endpoint
+
+```http
+POST /api/v1/payments
+```
+
+### Request Body
+
+```json
+{
+  "merchant_id": "MER001",
+  "service_id": "SER001",
+  "beneficiary_name": "Mary Banda",
+  "amount": 50000
+}
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Payment created successfully.",
+  "data": {
+    "payment_id": "PAY001",
+    "status": "COMPLETED"
+  }
+}
+```
+
+---
+
+## Get Payment History
+
+Returns previous payments made by the user.
+
+### Endpoint
+
+```http
+GET /api/v1/payments/history
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "payment_id": "PAY001",
+      "merchant": "Chipiku Plus",
+      "amount": 50000,
+      "status": "COMPLETED"
+    }
+  ]
+}
+```
+
+---
+
+# 5. Digital Voucher System
+
+## Generate Voucher
+
+Creates a digital voucher after successful payment.
+
+### Endpoint
+
+```http
+POST /api/v1/vouchers
+```
+
+### Request Body
+
+```json
+{
+  "payment_id": "PAY001"
+}
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "voucher_id": "KAYA-001245",
+    "status": "ACTIVE",
+    "merchant": "Chipiku Plus",
+    "amount": 50000
+  }
+}
+```
+
+---
+
+## Verify Voucher
+
+Allows merchants to check whether a voucher is valid.
+
+### Endpoint
+
+```http
+POST /api/v1/vouchers/verify
+```
+
+### Request Body
+
+```json
+{
+  "voucher_id": "KAYA-001245"
+}
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Voucher verified successfully.",
+  "data": {
+    "status": "VALID",
+    "amount": 50000,
+    "merchant": "Chipiku Plus"
+  }
+}
+```
+
+---
+
+## Redeem Voucher
+
+Marks a voucher as used after the customer receives goods or services.
+
+### Endpoint
+
+```http
+PATCH /api/v1/vouchers/{voucher_id}/redeem
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Voucher redeemed successfully.",
+  "data": {
+    "status": "REDEEMED"
+  }
+}
+```
+
+---
+
+# 6. Merchant Dashboard
+
+## View Merchant Transactions
+
+Returns payments received by a merchant.
+
+### Endpoint
+
+```http
+GET /api/v1/merchant/transactions
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "transaction_id": "PAY001",
+      "amount": 50000,
+      "status": "REDEEMED"
+    }
+  ]
+}
+```
+
+---
+
+# 7. User Profile
+
+## Get User Profile
+
+Retrieves user information.
+
+### Endpoint
+
+```http
+GET /api/v1/profile
 ```
 
 ---
 
 ## Update User Profile
 
-**Endpoint**
+Updates user details.
+
+### Endpoint
 
 ```http
-PUT /api/v1/user/profile
-```
-
-Updates personal information.
-
-### Headers
-
-```text
-Authorization: Bearer <token>
-```
-
-### Request Body
-
-```json
-{
-  "full_name": "Donald Banda",
-  "phone": "+265881234567"
-}
-```
-
-### Success Response (200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Profile updated successfully.",
-  "data": {
-    "user_id": "usr_987654321",
-    "full_name": "Donald Banda",
-    "phone": "+265881234567"
-  }
-}
+PUT /api/v1/profile
 ```
 
 ---
 
-# 2. Digital Wallet & Transaction Engine
+# 8. Security Features
 
-## Get Wallet Details
+KayaRemit API implements security practices including:
 
-**Endpoint**
-
-```http
-GET /api/v1/wallet
-```
-
-Returns wallet information, including balance.
-
-### Headers
-
-```text
-Authorization: Bearer <token>
-```
-
-### Success Response (200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Wallet details fetched successfully.",
-  "data": {
-    "wallet_id": "wal_11223344",
-    "currency": "MWK",
-    "balance": 150000.00,
-    "status": "ACTIVE"
-  }
-}
-```
+- JWT authentication.
+- Password protection.
+- Role-based access control.
+- Merchant verification.
+- Unique transaction identifiers.
+- Voucher validation.
+- Transaction logging.
+- Secure API communication.
 
 ---
 
-## Transfer Funds
+# 9. Future API Integrations
 
-**Endpoint**
+Future versions may include:
 
-```http
-POST /api/v1/wallet/transfer
-```
-
-Transfers money to another user or supported account.
-
-### Headers
-
-```text
-Authorization: Bearer <token>
-```
-
-### Request Body
-
-```json
-{
-  "recipient_identifier": "+265999000111",
-  "amount": 25000.00,
-  "currency": "MWK",
-  "narration": "Project expenses"
-}
-```
-
-### Success Response (200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Transfer processed successfully.",
-  "data": {
-    "transaction_id": "tx_55667788",
-    "amount": 25000.00,
-    "fee": 0.00,
-    "recipient": "Innocent Kapalamula",
-    "status": "COMPLETED",
-    "timestamp": "2026-07-21T08:30:00Z"
-  }
-}
-```
-
-### Error Response (400 Bad Request)
-
-```json
-{
-  "success": false,
-  "reason": "INSUFFICIENT_FUNDS",
-  "message": "Your wallet balance is insufficient to complete this transaction."
-}
-```
+- Mobile money APIs.
+- Banking APIs.
+- Payment gateway integrations.
+- AI-powered fraud detection.
+- Merchant analytics services.
 
 ---
 
-## Get Transaction History
+# Technology Stack
 
-**Endpoint**
+## Backend
 
-```http
-GET /api/v1/wallet/transactions
-```
+Python
 
-Retrieves paginated transaction history.
+## Database
 
-### Headers
+PostgreSQL
 
-```text
-Authorization: Bearer <token>
-```
+## Authentication
 
-### Query Parameters
+JWT
 
-```text
-?page=1&limit=10
-```
+## Frontend
 
-### Success Response (200 OK)
+HTML  
+Tailwind CSS  
+JavaScript
 
-```json
-{
-  "success": true,
-  "message": "Transactions retrieved successfully.",
-  "data": {
-    "transactions": [
-      {
-        "transaction_id": "tx_55667788",
-        "type": "DEBIT",
-        "amount": 25000.00,
-        "recipient_or_sender": "Innocent Kapalamula",
-        "status": "COMPLETED",
-        "created_at": "2026-07-21T08:30:00Z"
-      }
-    ],
-    "pagination": {
-      "current_page": 1,
-      "total_pages": 5,
-      "total_records": 48
-    }
-  }
-}
-```
+## Version Control
 
----
-
-# 3. Budgeting & Financial Goal Setting
-
-## Create Budget
-
-**Endpoint**
-
-```http
-POST /api/v1/budgets
-```
-
-Creates a spending budget for a category.
-
-### Headers
-
-```text
-Authorization: Bearer <token>
-```
-
-### Request Body
-
-```json
-{
-  "category": "Groceries",
-  "limit_amount": 50000.00,
-  "period": "MONTHLY"
-}
-```
-
-### Success Response (201 Created)
-
-```json
-{
-  "success": true,
-  "message": "Budget created successfully.",
-  "data": {
-    "budget_id": "bdg_001",
-    "category": "Groceries",
-    "limit_amount": 50000.00,
-    "spent_amount": 0.00,
-    "period": "MONTHLY"
-  }
-}
-```
-
----
-
-## List Budgets
-
-**Endpoint**
-
-```http
-GET /api/v1/budgets
-```
-
-Returns all active budgets.
-
-### Headers
-
-```text
-Authorization: Bearer <token>
-```
-
-### Success Response (200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Budgets retrieved successfully.",
-  "data": [
-    {
-      "budget_id": "bdg_001",
-      "category": "Groceries",
-      "limit_amount": 50000.00,
-      "spent_amount": 12500.00,
-      "remaining_amount": 37500.00,
-      "period": "MONTHLY"
-    }
-  ]
-}
-```
-
----
-
-## Create Savings Goal
-
-**Endpoint**
-
-```http
-POST /api/v1/goals
-```
-
-Creates a financial savings goal.
-
-### Headers
-
-```text
-Authorization: Bearer <token>
-```
-
-### Request Body
-
-```json
-{
-  "title": "Emergency Fund",
-  "target_amount": 200000.00,
-  "target_date": "2026-12-31"
-}
-```
-
-### Success Response (201 Created)
-
-```json
-{
-  "success": true,
-  "message": "Savings goal created successfully.",
-  "data": {
-    "goal_id": "gol_101",
-    "title": "Emergency Fund",
-    "target_amount": 200000.00,
-    "current_amount": 0.00,
-    "target_date": "2026-12-31"
-  }
-}
-```
-
----
-
-## Deposit to Savings Goal
-
-**Endpoint**
-
-```http
-POST /api/v1/goals/{goal_id}/deposit
-```
-
-Deposits funds into an existing savings goal.
-
-### Headers
-
-```text
-Authorization: Bearer <token>
-```
-
-### Request Body
-
-```json
-{
-  "amount": 10000.00
-}
-```
-
-### Success Response (200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Deposit to savings goal successful.",
-  "data": {
-    "goal_id": "gol_101",
-    "title": "Emergency Fund",
-    "target_amount": 200000.00,
-    "current_amount": 10000.00,
-    "progress_percentage": 5.0
-  }
-}
-```
-
----
-
-# 4. Notifications
-
-## Get Notifications
-
-**Endpoint**
-
-```http
-GET /api/v1/notifications
-```
-
-Retrieves transaction and system notifications.
-
-### Headers
-
-```text
-Authorization: Bearer <token>
-```
-
-### Success Response (200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Notifications fetched successfully.",
-  "data": [
-    {
-      "notification_id": "notif_9901",
-      "title": "Money Sent",
-      "message": "You sent MWK 25,000.00 to Innocent Kapalamula.",
-      "is_read": false,
-      "created_at": "2026-07-21T08:30:00Z"
-    }
-  ]
-}
-```
-
----
-
-## Mark Notification as Read
-
-**Endpoint**
-
-```http
-PATCH /api/v1/notifications/{notification_id}/read
-```
-
-Marks a notification as read.
-
-### Headers
-
-```text
-Authorization: Bearer <token>
-```
-
-### Success Response (200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Notification marked as read.",
-  "data": {
-    "notification_id": "notif_9901",
-    "is_read": true
-  }
-}
-```
+GitHub
