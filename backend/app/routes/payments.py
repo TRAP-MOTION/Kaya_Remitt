@@ -3,6 +3,8 @@ from backend.app.extensions import db
 from backend.app.models.merchant import Merchant
 from backend.app.models.service import Service
 from backend.app.models.payment import Payment
+from backend.app.models.transaction import Transaction
+from backend.app.models.notification import Notification
 from backend.app.utils.auth import token_required
 
 payments_bp = Blueprint("payments", __name__)
@@ -21,7 +23,6 @@ def create_payment():
     beneficiary_name = data.get("beneficiary_name")
     amount = data.get("amount")
 
-    # Validate required fields
     if not all([merchant_id, service_id, beneficiary_name, amount is not None]):
         return jsonify({
             "success": False,
@@ -38,7 +39,6 @@ def create_payment():
             "message": "amount must be a positive number."
         }), 400
 
-    # Validate merchant exists and is verified
     merchant = db.session.get(Merchant, merchant_id)
     if not merchant or not merchant.verified:
         return jsonify({
@@ -46,9 +46,12 @@ def create_payment():
             "message": "Merchant not found or not verified."
         }), 404
 
-    # Validate service belongs to the merchant
     service = db.session.execute(
-        db.select(Service).filter_by(id=service_id, merchant_id=merchant_id)
+        db.select(Service).filter_by(
+            service_id=service_id,
+            merchant_id=merchant_id,
+            availability=True,
+        )
     ).scalar_one_or_none()
 
     if not service:
@@ -59,22 +62,38 @@ def create_payment():
 
     try:
         payment = Payment(
-            user_id=user.id,
+            user_id=user.user_id,
             merchant_id=merchant_id,
             service_id=service_id,
             beneficiary_name=str(beneficiary_name).strip(),
             amount=amount,
-            status="COMPLETED"
+            payment_status="COMPLETED",
         )
         db.session.add(payment)
+        db.session.flush()
+
+        db.session.add(Transaction(
+            payment_id=payment.payment_id,
+            action="PAYMENT_CREATED",
+            performed_by=user.user_id,
+            status="COMPLETED",
+        ))
+        db.session.add(Notification(
+            user_id=user.user_id,
+            title="Payment Created",
+            message=(
+                f"Your payment of {amount:,.2f} to {merchant.business_name} "
+                f"for {beneficiary_name} was created successfully."
+            ),
+        ))
         db.session.commit()
 
         return jsonify({
             "success": True,
             "message": "Payment created successfully.",
             "data": {
-                "payment_id": payment.id,
-                "status": payment.status
+                "payment_id": payment.payment_id,
+                "status": payment.payment_status
             }
         }), 201
     except Exception:
@@ -93,7 +112,7 @@ def get_payment_history():
 
     payments = db.session.execute(
         db.select(Payment)
-        .filter_by(user_id=user.id)
+        .filter_by(user_id=user.user_id)
         .order_by(Payment.created_at.desc())
     ).scalars().all()
 

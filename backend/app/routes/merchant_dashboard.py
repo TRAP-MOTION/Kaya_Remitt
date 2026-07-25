@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, g
 from backend.app.extensions import db
 from backend.app.models.payment import Payment
+from backend.app.models.merchant import Merchant
 from backend.app.utils.auth import token_required
 
 merchant_dashboard_bp = Blueprint("merchant_dashboard", __name__)
@@ -9,13 +10,7 @@ merchant_dashboard_bp = Blueprint("merchant_dashboard", __name__)
 @merchant_dashboard_bp.route("/transactions", methods=["GET"], strict_slashes=False)
 @token_required
 def get_merchant_transactions():
-    """GET /api/v1/merchant/transactions — Returns payments received by the merchant.
-
-    The authenticated user must have the 'merchant' role. This endpoint returns
-    all payments directed at any merchant associated with the current user.
-    For now, since merchant accounts are a future feature, we query payments
-    where the merchant's user_id matches.
-    """
+    """GET /api/v1/merchant/transactions — Returns payments received by a merchant."""
     user = g.current_user
 
     if user.role != "merchant":
@@ -24,16 +19,13 @@ def get_merchant_transactions():
             "message": "Access restricted to merchant accounts."
         }), 403
 
-    # Fetch payments received by merchants that belong to this user.
-    # The join goes: Payment -> Merchant, filtering by Merchant.user_id once
-    # that relationship exists. For now we return payments from the DB using
-    # merchant_id lookup — this will be extended when a Merchant <-> User
-    # ownership relationship is added.
-    from backend.app.models.merchant import Merchant
-
+    # Match merchant account by email when ownership linkage is not yet modeled.
     merchant = db.session.execute(
-        db.select(Merchant).filter_by(verified=True)
-    ).scalars().first()
+        db.select(Merchant).filter_by(
+            email=user.email,
+            verification_status="Verified",
+        )
+    ).scalar_one_or_none()
 
     if not merchant:
         return jsonify({
@@ -43,18 +35,20 @@ def get_merchant_transactions():
 
     payments = db.session.execute(
         db.select(Payment)
-        .filter_by(merchant_id=merchant.id)
+        .filter_by(merchant_id=merchant.merchant_id)
         .order_by(Payment.created_at.desc())
     ).scalars().all()
 
-    transactions = [
-        {
-            "transaction_id": p.id,
-            "amount": round(float(p.amount), 2),
-            "status": "REDEEMED" if p.status == "COMPLETED" else p.status
-        }
-        for p in payments
-    ]
+    transactions = []
+    for payment in payments:
+        status = payment.payment_status
+        if payment.voucher and payment.voucher.status.lower() == "redeemed":
+            status = "REDEEMED"
+        transactions.append({
+            "transaction_id": payment.payment_id,
+            "amount": round(float(payment.amount), 2),
+            "status": status,
+        })
 
     return jsonify({
         "success": True,

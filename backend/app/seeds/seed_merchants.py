@@ -1,58 +1,86 @@
-"""Seed script: populates the database with sample verified merchants and services.
+"""Seed script: populates merchant categories, merchants, and services.
 
 Run from the project root:
-    cd backend
     python -m backend.app.seeds.seed_merchants
 """
 from backend.app import create_app
 from backend.app.extensions import db
+from backend.app.models.merchant_category import MerchantCategory
 from backend.app.models.merchant import Merchant
 from backend.app.models.service import Service
 
 
 SEED_DATA = [
     {
+        "category": "Groceries",
         "business_name": "Chipiku Plus",
-        "category": "Groceries",
-        "location": "Lilongwe",
-        "verified": True,
+        "email": "chipiku@example.com",
+        "phone": "+265991000001",
+        "address": "Area 47",
+        "city": "Lilongwe",
+        "district": "Lilongwe",
+        "verification_status": "Verified",
         "services": [
-            {"name": "Grocery Package", "amount": 50000},
-            {"name": "Essential Food Basket", "amount": 30000},
+            {"service_name": "Grocery Package", "price": 50000, "description": "Weekly grocery essentials"},
+            {"service_name": "Essential Food Basket", "price": 30000, "description": "Basic food staples"},
         ],
     },
     {
+        "category": "Groceries",
         "business_name": "Peoples Supermarket",
-        "category": "Groceries",
-        "location": "Blantyre",
-        "verified": True,
+        "email": "peoples@example.com",
+        "phone": "+265991000002",
+        "address": "Victoria Avenue",
+        "city": "Blantyre",
+        "district": "Blantyre",
+        "verification_status": "Verified",
         "services": [
-            {"name": "Weekly Grocery Bundle", "amount": 45000},
-            {"name": "Monthly Staples Pack", "amount": 120000},
+            {"service_name": "Weekly Grocery Bundle", "price": 45000},
+            {"service_name": "Monthly Staples Pack", "price": 120000},
         ],
     },
     {
+        "category": "Pharmacy",
         "business_name": "Kamuzu Central Hospital Pharmacy",
-        "category": "Healthcare",
-        "location": "Lilongwe",
-        "verified": True,
+        "email": "kch-pharmacy@example.com",
+        "phone": "+265991000003",
+        "address": "KCH Campus",
+        "city": "Lilongwe",
+        "district": "Lilongwe",
+        "verification_status": "Verified",
         "services": [
-            {"name": "Prescription Fill", "amount": 15000},
-            {"name": "Medical Consultation", "amount": 25000},
+            {"service_name": "Prescription Fill", "price": 15000},
+            {"service_name": "Medical Consultation", "price": 25000},
         ],
     },
     {
+        "category": "Utility Provider",
         "business_name": "ESCOM Utilities",
-        "category": "Utilities",
-        "location": "Nationwide",
-        "verified": True,
+        "email": "escom@example.com",
+        "phone": "+265991000004",
+        "address": "Nationwide",
+        "city": "Lilongwe",
+        "district": "Lilongwe",
+        "verification_status": "Verified",
         "services": [
-            {"name": "Electricity Token 5,000 MWK", "amount": 5000},
-            {"name": "Electricity Token 10,000 MWK", "amount": 10000},
-            {"name": "Electricity Token 20,000 MWK", "amount": 20000},
+            {"service_name": "Electricity Token 5,000 MWK", "price": 5000},
+            {"service_name": "Electricity Token 10,000 MWK", "price": 10000},
+            {"service_name": "Electricity Token 20,000 MWK", "price": 20000},
         ],
     },
 ]
+
+
+def get_or_create_category(category_name: str) -> MerchantCategory:
+    category = db.session.execute(
+        db.select(MerchantCategory).filter_by(category_name=category_name)
+    ).scalar_one_or_none()
+    if category:
+        return category
+    category = MerchantCategory(category_name=category_name)
+    db.session.add(category)
+    db.session.flush()
+    return category
 
 
 def seed():
@@ -67,24 +95,34 @@ def seed():
                 print(f"  Skipped (already exists): {merchant_data['business_name']}")
                 continue
 
+            category = get_or_create_category(merchant_data["category"])
             merchant = Merchant(
+                category_id=category.category_id,
                 business_name=merchant_data["business_name"],
-                category=merchant_data["category"],
-                location=merchant_data["location"],
-                verified=merchant_data["verified"],
+                email=merchant_data.get("email"),
+                phone=merchant_data.get("phone"),
+                address=merchant_data.get("address"),
+                city=merchant_data.get("city"),
+                district=merchant_data.get("district"),
+                verification_status=merchant_data["verification_status"],
             )
             db.session.add(merchant)
-            db.session.flush()  # Get merchant.id before adding services
+            db.session.flush()
 
             for svc in merchant_data["services"]:
                 service = Service(
-                    merchant_id=merchant.id,
-                    name=svc["name"],
-                    amount=svc["amount"],
+                    merchant_id=merchant.merchant_id,
+                    service_name=svc["service_name"],
+                    description=svc.get("description"),
+                    price=svc["price"],
+                    availability=True,
                 )
                 db.session.add(service)
 
-            print(f"  Seeded: {merchant_data['business_name']} ({len(merchant_data['services'])} services)")
+            print(
+                f"  Seeded: {merchant_data['business_name']} "
+                f"({len(merchant_data['services'])} services)"
+            )
 
         db.session.commit()
         print("Seed complete.")

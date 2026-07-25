@@ -13,7 +13,9 @@ merchants_bp = Blueprint("merchants", __name__)
 def get_merchants():
     """GET /api/v1/merchants — Returns all verified merchants."""
     merchants = db.session.execute(
-        db.select(Merchant).filter_by(verified=True).order_by(Merchant.business_name)
+        db.select(Merchant)
+        .filter_by(verification_status="Verified")
+        .order_by(Merchant.business_name)
     ).scalars().all()
 
     return jsonify({
@@ -53,7 +55,7 @@ def get_merchant_services(merchant_id):
         }), 404
 
     services = db.session.execute(
-        db.select(Service).filter_by(merchant_id=merchant_id)
+        db.select(Service).filter_by(merchant_id=merchant_id, availability=True)
     ).scalars().all()
 
     return jsonify({

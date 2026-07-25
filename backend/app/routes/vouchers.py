@@ -1,10 +1,23 @@
+from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 from backend.app.extensions import db
 from backend.app.models.payment import Payment
 from backend.app.models.voucher import Voucher
+from backend.app.models.transaction import Transaction
+from backend.app.models.notification import Notification
 from backend.app.utils.auth import token_required
 
 vouchers_bp = Blueprint("vouchers", __name__)
+
+
+def _find_voucher(voucher_identifier):
+    """Look up a voucher by voucher_id (UUID) or voucher_code."""
+    voucher = db.session.get(Voucher, voucher_identifier)
+    if voucher:
+        return voucher
+    return db.session.execute(
+        db.select(Voucher).filter_by(voucher_code=voucher_identifier)
+    ).scalar_one_or_none()
 
 
 @vouchers_bp.route("", methods=["POST"], strict_slashes=False)
@@ -22,9 +35,8 @@ def generate_voucher():
             "message": "payment_id is required."
         }), 400
 
-    # Ensure the payment belongs to the requesting user
     payment = db.session.execute(
-        db.select(Payment).filter_by(id=payment_id, user_id=user.id)
+        db.select(Payment).filter_by(payment_id=payment_id, user_id=user.user_id)
     ).scalar_one_or_none()
 
     if not payment:
@@ -33,13 +45,12 @@ def generate_voucher():
             "message": "Payment not found."
         }), 404
 
-    if payment.status != "COMPLETED":
+    if payment.payment_status != "COMPLETED":
         return jsonify({
             "success": False,
             "message": "A voucher can only be generated for a completed payment."
         }), 400
 
-    # Check if a voucher already exists for this payment
     existing = db.session.execute(
         db.select(Voucher).filter_by(payment_id=payment_id)
     ).scalar_one_or_none()
@@ -52,12 +63,23 @@ def generate_voucher():
 
     try:
         voucher = Voucher(
-            payment_id=payment.id,
-            merchant_id=payment.merchant_id,
-            amount=payment.amount,
-            status="ACTIVE"
+            payment_id=payment.payment_id,
+            status="Active",
         )
         db.session.add(voucher)
+        db.session.flush()
+
+        db.session.add(Transaction(
+            payment_id=payment.payment_id,
+            action="VOUCHER_ISSUED",
+            performed_by=user.user_id,
+            status="Active",
+        ))
+        db.session.add(Notification(
+            user_id=user.user_id,
+            title="Voucher Issued",
+            message=f"A voucher ({voucher.voucher_code}) has been issued for your payment.",
+        ))
         db.session.commit()
 
         return jsonify({
@@ -85,7 +107,7 @@ def verify_voucher():
             "message": "voucher_id is required."
         }), 400
 
-    voucher = db.session.get(Voucher, voucher_id)
+    voucher = _find_voucher(voucher_id)
 
     if not voucher:
         return jsonify({
@@ -93,14 +115,21 @@ def verify_voucher():
             "message": "Voucher not found."
         }), 404
 
-    if voucher.status == "REDEEMED":
+    merchant_name = None
+    amount = None
+    if voucher.payment:
+        amount = round(float(voucher.payment.amount), 2)
+        if voucher.payment.merchant:
+            merchant_name = voucher.payment.merchant.business_name
+
+    if voucher.status.lower() == "redeemed":
         return jsonify({
             "success": False,
             "message": "This voucher has already been redeemed.",
             "data": {
                 "status": "REDEEMED",
-                "amount": round(float(voucher.amount), 2),
-                "merchant": voucher.merchant.business_name if voucher.merchant else None
+                "amount": amount,
+                "merchant": merchant_name,
             }
         }), 400
 
@@ -109,8 +138,8 @@ def verify_voucher():
         "message": "Voucher verified successfully.",
         "data": {
             "status": "VALID",
-            "amount": round(float(voucher.amount), 2),
-            "merchant": voucher.merchant.business_name if voucher.merchant else None
+            "amount": amount,
+            "merchant": merchant_name,
         }
     }), 200
 
@@ -119,7 +148,8 @@ def verify_voucher():
 @token_required
 def redeem_voucher(voucher_id):
     """PATCH /api/v1/vouchers/{voucher_id}/redeem — Marks a voucher as used."""
-    voucher = db.session.get(Voucher, voucher_id)
+    user = g.current_user
+    voucher = _find_voucher(voucher_id)
 
     if not voucher:
         return jsonify({
@@ -127,14 +157,30 @@ def redeem_voucher(voucher_id):
             "message": "Voucher not found."
         }), 404
 
-    if voucher.status == "REDEEMED":
+    if voucher.status.lower() == "redeemed":
         return jsonify({
             "success": False,
             "message": "This voucher has already been redeemed."
         }), 400
 
     try:
-        voucher.status = "REDEEMED"
+        voucher.status = "Redeemed"
+        voucher.redeemed_at = datetime.now(timezone.utc)
+
+        db.session.add(Transaction(
+            payment_id=voucher.payment_id,
+            action="VOUCHER_REDEEMED",
+            performed_by=user.user_id,
+            status="Redeemed",
+        ))
+
+        if voucher.payment:
+            db.session.add(Notification(
+                user_id=voucher.payment.user_id,
+                title="Voucher Redeemed",
+                message=f"Your voucher ({voucher.voucher_code}) has been redeemed.",
+            ))
+
         db.session.commit()
 
         return jsonify({

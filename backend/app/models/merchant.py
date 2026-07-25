@@ -3,35 +3,53 @@ import uuid
 from backend.app.extensions import db
 
 
-def generate_merchant_id():
-    return f"MER{uuid.uuid4().hex[:6].upper()}"
+def generate_uuid():
+    return str(uuid.uuid4())
 
 
 class Merchant(db.Model):
     __tablename__ = "merchants"
 
-    id = db.Column(db.String(36), primary_key=True, default=generate_merchant_id)
-    business_name = db.Column(db.String(120), nullable=False)
-    category = db.Column(db.String(80), nullable=False)
-    location = db.Column(db.String(120), nullable=False)
-    verified = db.Column(db.Boolean, nullable=False, default=False)
+    merchant_id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    category_id = db.Column(
+        db.String(36),
+        db.ForeignKey("merchant_categories.category_id"),
+        nullable=False,
+        index=True,
+    )
+    business_name = db.Column(db.String(150), nullable=False)
+    email = db.Column(db.String(100), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
+    address = db.Column(db.Text, nullable=True)
+    city = db.Column(db.String(100), nullable=True)
+    district = db.Column(db.String(100), nullable=True)
+    verification_status = db.Column(db.String(20), nullable=False, default="Pending")
+    logo = db.Column(db.Text, nullable=True)
     created_at = db.Column(
         db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
 
-    # Relationships
+    category = db.relationship("MerchantCategory", back_populates="merchants")
     services = db.relationship(
-        "Service", backref="merchant", cascade="all, delete-orphan", lazy="dynamic"
+        "Service", back_populates="merchant", cascade="all, delete-orphan", lazy="dynamic"
     )
+    payments = db.relationship("Payment", back_populates="merchant", lazy="dynamic")
+
+    @property
+    def verified(self):
+        return self.verification_status.lower() == "verified"
 
     def to_dict(self, include_services=False):
         data = {
-            "merchant_id": self.id,
+            "merchant_id": self.merchant_id,
             "business_name": self.business_name,
-            "category": self.category,
-            "location": self.location,
+            "category": self.category.category_name if self.category else None,
+            "location": self.city,
             "verified": self.verified,
         }
         if include_services:
-            data["services"] = [s.to_dict() for s in self.services]
+            data["services"] = [
+                {"name": s.service_name, "price": float(s.price)}
+                for s in self.services
+            ]
         return data
