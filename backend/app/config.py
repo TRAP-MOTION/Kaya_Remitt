@@ -16,21 +16,34 @@ class Config:
     if not PAYCHANGU_SECRET_KEY:
         raise ValueError("PAYCHANGU SECRET KEY not provided. Payments will not be processed.")
 
+    PAYCHANGU_SECRET_KEY = os.getenv("PAYCHANGU_SECRET_KEY")
+    PAYCHANGU_CALLBACK_URL = os.getenv("PAYCHANGU_CALLBACK_URL")
+    PAYCHANGU_RETURN_URL = os.getenv("PAYCHANGU_RETURN_URL")
+    PAYCHANGU_CURRENCY = os.getenv("PAYCHANGU_CURRENCY", "MWK")
+
+
 class DevelopmentConfig(Config):
     DEBUG = True
     TESTING = False
 
+
 class TestingConfig(Config):
     DEBUG = False
     TESTING = True
+    PAYCHANGU_SECRET_KEY = "test-paychangu-secret"
+    PAYCHANGU_CALLBACK_URL = "https://example.com/callback"
+    PAYCHANGU_RETURN_URL = "https://example.com/return"
+    PAYCHANGU_CURRENCY = "MWK"
+
 
 class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
 
+
 config = {
     "development": DevelopmentConfig,
     "testing": TestingConfig,
     "production": ProductionConfig,
-    "default": DevelopmentConfig
+    "default": DevelopmentConfig,
 }
