@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register - Kaya Remit</title>
+  <link rel="icon" type="image/jpeg" href="assets/logo.jpeg" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     
@@ -188,13 +189,6 @@
     <!-- Form Content -->
     <div class="content">
       <h2>Create Account</h2>
-      
-      <span class="role-label">Registering as:</span>
-      <div class="role-selector">
-        <button type="button" class="role-btn active" id="btnUser" onclick="setRole('user')">Sender</button>
-        <button type="button" class="role-btn" id="btnMerchant" onclick="setRole('merchant')">Merchant</button>
-        <button type="button" class="role-btn" id="btnAdmin" onclick="setRole('admin')">Admin</button>
-      </div>
 
       <form id="registerForm" onsubmit="handleRegister(event)">
         <input type="hidden" id="selectedRole" value="user">
