@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # KayaRemit
 
 ## Direct-to-Merchant Diaspora Payment Platform for Malawi
@@ -217,5 +216,3 @@ By connecting people abroad with verified local merchants, KayaRemit demonstrate
 -Frontend Developer
 -Researcher
 -Communications Lead
-=======
->>>>>>> research
