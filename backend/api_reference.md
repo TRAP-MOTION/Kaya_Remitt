@@ -239,10 +239,13 @@ POST /api/v1/payments
   "message": "Payment created successfully.",
   "data": {
     "payment_id": "PAY001",
-    "status": "COMPLETED"
+    "status": "Pending",
+    "checkout_url": "https://checkout.paychangu.com/923677185321"
   }
 }
 ```
+
+The frontend should redirect the user to `checkout_url` to complete payment on PayChangu. Payment status becomes `COMPLETED` only after PayChangu verification during voucher generation.
 
 ---
 
@@ -279,6 +282,8 @@ GET /api/v1/payments/history
 ## Generate Voucher
 
 Creates a digital voucher after successful payment.
+
+If the payment is still `Pending`, the backend verifies the transaction with PayChangu using the stored `transaction_reference`. On success it marks the payment `COMPLETED`, simulates the merchant payout (sandbox), then issues the voucher.
 
 ### Endpoint
 

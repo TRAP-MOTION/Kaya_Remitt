@@ -9,6 +9,7 @@ from backend.app.models.notification import Notification
 from backend.app.utils.auth import token_required
 from backend.app.utils.validation import load_json, validation_error_response
 from backend.app.schemas.payment_schema import CreatePaymentSchema
+from backend.app.utils.payments_paychangu import initiate_checkout, PayChanguError
 
 payments_bp = Blueprint("payments", __name__)
 
@@ -19,7 +20,7 @@ _create_payment_schema = CreatePaymentSchema()
 @payments_bp.route("/", methods=["POST"], strict_slashes=False)
 @token_required
 def create_payment():
-    """POST /api/v1/payments — Creates a payment for a merchant service."""
+    """POST /api/v1/payments — Creates a payment and returns a PayChangu checkout URL."""
     user = g.current_user
 
     try:
@@ -36,7 +37,7 @@ def create_payment():
     if not merchant or not merchant.verified:
         return jsonify({
             "success": False,
-            "message": "Invalid or unverified merchant.."
+            "message": "Merchant not found or not verified."
         }), 404
 
     service = db.session.execute(
@@ -60,23 +61,25 @@ def create_payment():
             service_id=service_id,
             beneficiary_name=beneficiary_name,
             amount=amount,
-            payment_status="COMPLETED",
+            payment_status="Pending",
         )
         db.session.add(payment)
         db.session.flush()
 
+        checkout_url = initiate_checkout(payment, user)
+
         db.session.add(Transaction(
             payment_id=payment.payment_id,
-            action="PAYMENT_CREATED",
+            action="CHECKOUT_INITIATED",
             performed_by=user.user_id,
-            status="COMPLETED",
+            status="Pending",
         ))
         db.session.add(Notification(
             user_id=user.user_id,
-            title="Payment Created",
+            title="Payment Initiated",
             message=(
                 f"Your payment of {float(amount):,.2f} to {merchant.business_name} "
-                f"for {beneficiary_name} was created successfully."
+                f"for {beneficiary_name} is ready. Complete checkout to continue."
             ),
         ))
         db.session.commit()
@@ -86,9 +89,16 @@ def create_payment():
             "message": "Payment created successfully.",
             "data": {
                 "payment_id": payment.payment_id,
-                "status": payment.payment_status
+                "status": payment.payment_status,
+                "checkout_url": checkout_url,
             }
         }), 201
+    except PayChanguError as exc:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 502
     except Exception:
         db.session.rollback()
         return jsonify({

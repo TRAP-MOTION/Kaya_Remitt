@@ -21,6 +21,10 @@ def app():
         "SQLALCHEMY_TRACK_MODIFICATIONS": False,
         "SECRET_KEY": "test-secret-key",
         "JWT_SECRET_KEY": "test-jwt-secret-key",
+        "PAYCHANGU_SECRET_KEY": "test-paychangu-secret",
+        "PAYCHANGU_CALLBACK_URL": "https://example.com/callback",
+        "PAYCHANGU_RETURN_URL": "https://example.com/return",
+        "PAYCHANGU_CURRENCY": "MWK",
     })
 
     with _app.app_context():

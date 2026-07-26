@@ -6,3 +6,6 @@ flask-limiter
 python-dotenv
 marshmallow
 gunicorn
+paychangu
+pyjwt
+pytest

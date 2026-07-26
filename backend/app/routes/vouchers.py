@@ -10,6 +10,11 @@ from backend.app.utils.auth import token_required
 from backend.app.utils.validation import load_json, load_path, validation_error_response
 from backend.app.schemas.voucher_schema import GenerateVoucherSchema, VerifyVoucherSchema
 from backend.app.schemas.common import VoucherIdPathSchema
+from backend.app.utils.payments_paychangu import (
+    verify_checkout,
+    simulate_merchant_payout,
+    PayChanguError,
+)
 
 vouchers_bp = Blueprint("vouchers", __name__)
 
@@ -26,6 +31,45 @@ def _find_voucher(voucher_identifier):
     return db.session.execute(
         db.select(Voucher).filter_by(voucher_code=voucher_identifier)
     ).scalar_one_or_none()
+
+
+def _ensure_payment_completed(payment: Payment, user_id: str) -> tuple[bool, str | None]:
+    """
+    Ensure payment is COMPLETED before issuing a voucher.
+
+    Pending payments are verified with PayChangu on voucher create only.
+    """
+    if payment.payment_status == "COMPLETED":
+        return True, None
+
+    if payment.payment_status != "Pending":
+        return False, "A voucher can only be generated for a completed payment."
+
+    try:
+        paid = verify_checkout(payment)
+    except PayChanguError as exc:
+        return False, str(exc)
+
+    if not paid:
+        return False, "Payment has not been completed yet. Finish checkout and try again."
+
+    payment.payment_status = "COMPLETED"
+    db.session.add(Transaction(
+        payment_id=payment.payment_id,
+        action="PAYMENT_VERIFIED",
+        performed_by=user_id,
+        status="COMPLETED",
+    ))
+    simulate_merchant_payout(payment, performed_by=user_id)
+    db.session.add(Notification(
+        user_id=payment.user_id,
+        title="Payment Completed",
+        message=(
+            f"Your payment of {float(payment.amount):,.2f} "
+            f"({payment.transaction_reference}) was verified successfully."
+        ),
+    ))
+    return True, None
 
 
 @vouchers_bp.route("", methods=["POST"], strict_slashes=False)
@@ -52,12 +96,6 @@ def generate_voucher():
             "message": "Payment not found."
         }), 404
 
-    if payment.payment_status != "COMPLETED":
-        return jsonify({
-            "success": False,
-            "message": "A voucher can only be generated for a completed payment."
-        }), 400
-
     existing = db.session.execute(
         db.select(Voucher).filter_by(payment_id=payment_id)
     ).scalar_one_or_none()
@@ -67,6 +105,15 @@ def generate_voucher():
             "success": True,
             "data": existing.to_dict()
         }), 200
+
+    ok, error_message = _ensure_payment_completed(payment, user.user_id)
+    if not ok:
+        db.session.rollback()
+        status_code = 502 if error_message and error_message.startswith("Failed") else 400
+        return jsonify({
+            "success": False,
+            "message": error_message,
+        }), status_code
 
     try:
         voucher = Voucher(

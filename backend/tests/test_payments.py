@@ -1,9 +1,10 @@
 """Tests for payment endpoints (/api/v1/payments)."""
 import uuid
+from unittest.mock import patch
 
 
 def test_create_payment_success(client, diaspora_headers, sample_merchant):
-    """Test successful payment creation."""
+    """Test successful payment creation with PayChangu checkout URL."""
     merchant = sample_merchant["merchant"]
     service = sample_merchant["service"]
 
@@ -14,13 +15,44 @@ def test_create_payment_success(client, diaspora_headers, sample_merchant):
         "amount": 50000.00,
     }
 
-    response = client.post("/api/v1/payments", json=payload, headers=diaspora_headers)
+    checkout_url = "https://checkout.paychangu.com/test-session"
+    with patch(
+        "backend.app.routes.payments.initiate_checkout",
+        return_value=checkout_url,
+    ):
+        response = client.post("/api/v1/payments", json=payload, headers=diaspora_headers)
+
     assert response.status_code == 201
     res_data = response.get_json()
     assert res_data["success"] is True
     assert res_data["message"] == "Payment created successfully."
     assert "payment_id" in res_data["data"]
-    assert res_data["data"]["status"] == "COMPLETED"
+    assert res_data["data"]["status"] == "Pending"
+    assert res_data["data"]["checkout_url"] == checkout_url
+
+
+def test_create_payment_paychangu_failure(client, diaspora_headers, sample_merchant):
+    """Test payment creation rolls back when PayChangu initiate fails."""
+    from backend.app.utils.payments_paychangu import PayChanguError
+
+    merchant = sample_merchant["merchant"]
+    service = sample_merchant["service"]
+    payload = {
+        "merchant_id": merchant.merchant_id,
+        "service_id": service.service_id,
+        "beneficiary_name": "Mary Banda",
+        "amount": 50000.00,
+    }
+
+    with patch(
+        "backend.app.routes.payments.initiate_checkout",
+        side_effect=PayChanguError("Failed to initiate PayChangu checkout: boom"),
+    ):
+        response = client.post("/api/v1/payments", json=payload, headers=diaspora_headers)
+
+    assert response.status_code == 502
+    res_data = response.get_json()
+    assert res_data["success"] is False
 
 
 def test_create_payment_unauthenticated(client, sample_merchant):
