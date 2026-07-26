@@ -11,6 +11,10 @@ class Config:
 
     if not SECRET_KEY or not DATABASE_URL or not JWT_SECRET_KEY:
         raise ValueError("SECRET KEY or DATABASE URL or JWT SECRET KEY is missing.")
+    
+    PAYCHANGU_SECRET_KEY = os.getenv("PAYCHANGU_SECRET_KEY")
+    if not PAYCHANGU_SECRET_KEY:
+        raise ValueError("PAYCHANGU SECRET KEY not provided. Payments will not be processed.")
 
     PAYCHANGU_SECRET_KEY = os.getenv("PAYCHANGU_SECRET_KEY")
     PAYCHANGU_CALLBACK_URL = os.getenv("PAYCHANGU_CALLBACK_URL")
