@@ -428,7 +428,358 @@ PUT /api/v1/profile
 
 ---
 
-# 8. Security Features
+# 8. Admin Dashboard
+
+Admin endpoints require JWT authentication and an account with the `admin` role.
+
+Unauthorized or non-admin requests return:
+
+```json
+{
+  "success": false,
+  "message": "Access restricted to admin accounts."
+}
+```
+
+---
+
+## 8.1 Change Merchant Status
+
+Updates a merchant's verification status.
+
+Allowed `verification_status` values:
+
+- `Pending`
+- `Verified`
+- `Rejected`
+- `Suspended`
+
+### Endpoint
+
+```http
+PATCH /api/v1/admin/merchants/{merchant_id}/status
+```
+
+### Request Body
+
+```json
+{
+  "verification_status": "Verified",
+  "reason": "Documents reviewed and approved."
+}
+```
+
+| Field | Type | Required | Description |
+|--------|------|----------|-------------|
+| verification_status | string | Yes | New merchant status |
+| reason | string | No | Optional admin note |
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Merchant status updated successfully.",
+  "data": {
+    "merchant_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "business_name": "Chipiku Plus",
+    "verification_status": "Verified",
+    "updated_at": "2026-07-26T17:00:00Z"
+  }
+}
+```
+
+---
+
+## 8.2 Deactivate and Activate Accounts
+
+Activates or deactivates a user account. Deactivated accounts cannot log in or access protected endpoints.
+
+Allowed `account_status` values:
+
+- `Active`
+- `Inactive`
+
+### Deactivate Account
+
+### Endpoint
+
+```http
+PATCH /api/v1/admin/users/{user_id}/deactivate
+```
+
+### Request Body
+
+```json
+{
+  "reason": "Suspicious activity reported."
+}
+```
+
+| Field | Type | Required | Description |
+|--------|------|----------|-------------|
+| reason | string | No | Optional admin note |
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Account deactivated successfully.",
+  "data": {
+    "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "email": "john@example.com",
+    "account_status": "Inactive"
+  }
+}
+```
+
+---
+
+### Activate Account
+
+### Endpoint
+
+```http
+PATCH /api/v1/admin/users/{user_id}/activate
+```
+
+### Request Body
+
+```json
+{
+  "reason": "Issue resolved. Account restored."
+}
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Account activated successfully.",
+  "data": {
+    "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "email": "john@example.com",
+    "account_status": "Active"
+  }
+}
+```
+
+---
+
+## 8.3 Warning Notifications
+
+Sends a warning notification to a user. The notification is stored and delivered to the target account.
+
+### Send Warning Notification
+
+### Endpoint
+
+```http
+POST /api/v1/admin/warnings
+```
+
+### Request Body
+
+```json
+{
+  "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "title": "Account Warning",
+  "message": "Multiple failed payment attempts were detected on your account. Further abuse may result in suspension."
+}
+```
+
+| Field | Type | Required | Description |
+|--------|------|----------|-------------|
+| user_id | UUID | Yes | Target user |
+| title | string | Yes | Warning title (max 150) |
+| message | string | Yes | Warning body |
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Warning notification sent successfully.",
+  "data": {
+    "notification_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "title": "Account Warning",
+    "message": "Multiple failed payment attempts were detected on your account. Further abuse may result in suspension.",
+    "is_read": false,
+    "created_at": "2026-07-26T17:05:00Z"
+  }
+}
+```
+
+---
+
+### List Warning Notifications
+
+Returns warning notifications sent by admins. Optional filter by user.
+
+### Endpoint
+
+```http
+GET /api/v1/admin/warnings
+```
+
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| user_id | UUID | No | Filter warnings for a specific user |
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "notification_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "title": "Account Warning",
+      "message": "Multiple failed payment attempts were detected on your account.",
+      "is_read": false,
+      "created_at": "2026-07-26T17:05:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## 8.4 Support and Complaints
+
+Allows admins to list, view, and resolve user support tickets and complaints.
+
+Allowed ticket `status` values:
+
+- `Open`
+- `In Progress`
+- `Resolved`
+- `Closed`
+
+Allowed ticket `category` values:
+
+- `Support`
+- `Complaint`
+- `Payment`
+- `Merchant`
+- `Other`
+
+---
+
+### List Support Tickets
+
+### Endpoint
+
+```http
+GET /api/v1/admin/support
+```
+
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| status | string | No | Filter by ticket status |
+| category | string | No | Filter by category |
+| user_id | UUID | No | Filter by submitting user |
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "ticket_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "category": "Complaint",
+      "subject": "Merchant refused voucher",
+      "status": "Open",
+      "created_at": "2026-07-26T16:00:00Z",
+      "updated_at": "2026-07-26T16:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Get Support Ticket Details
+
+### Endpoint
+
+```http
+GET /api/v1/admin/support/{ticket_id}
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "ticket_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+    "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "category": "Complaint",
+    "subject": "Merchant refused voucher",
+    "description": "The merchant declined to honor a valid voucher code KAYA-A1B2C3.",
+    "status": "Open",
+    "admin_response": null,
+    "created_at": "2026-07-26T16:00:00Z",
+    "updated_at": "2026-07-26T16:00:00Z"
+  }
+}
+```
+
+---
+
+### Update Support Ticket Status
+
+Updates ticket status and optionally adds an admin response.
+
+### Endpoint
+
+```http
+PATCH /api/v1/admin/support/{ticket_id}
+```
+
+### Request Body
+
+```json
+{
+  "status": "Resolved",
+  "admin_response": "We contacted the merchant and confirmed the voucher. Please try again."
+}
+```
+
+| Field | Type | Required | Description |
+|--------|------|----------|-------------|
+| status | string | Yes | New ticket status |
+| admin_response | string | No | Message shown to the user |
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Support ticket updated successfully.",
+  "data": {
+    "ticket_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+    "status": "Resolved",
+    "admin_response": "We contacted the merchant and confirmed the voucher. Please try again.",
+    "updated_at": "2026-07-26T17:30:00Z"
+  }
+}
+```
+
+---
+
+# 9. Security Features
 
 KayaRemit API implements security practices including:
 
@@ -440,10 +791,11 @@ KayaRemit API implements security practices including:
 - Voucher validation.
 - Transaction logging.
 - Secure API communication.
+- Admin-only dashboard controls.
 
 ---
 
-# 9. Future API Integrations
+# 10. Future API Integrations
 
 Future versions may include:
 
