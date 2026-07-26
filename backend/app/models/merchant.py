@@ -28,6 +28,12 @@ class Merchant(db.Model):
     created_at = db.Column(
         db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
+    updated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     category = db.relationship("MerchantCategory", back_populates="merchants")
     services = db.relationship(
@@ -38,6 +44,16 @@ class Merchant(db.Model):
     @property
     def verified(self):
         return self.verification_status.lower() == "verified"
+
+    def _format_dt(self, value):
+        if not value:
+            return None
+        formatted = value.isoformat()
+        if formatted.endswith("+00:00"):
+            return formatted[:-6] + "Z"
+        if not formatted.endswith("Z"):
+            return formatted + "Z"
+        return formatted
 
     def to_dict(self, include_services=False):
         data = {
@@ -53,3 +69,11 @@ class Merchant(db.Model):
                 for s in self.services
             ]
         return data
+
+    def to_admin_status_dict(self):
+        return {
+            "merchant_id": self.merchant_id,
+            "business_name": self.business_name,
+            "verification_status": self.verification_status,
+            "updated_at": self._format_dt(self.updated_at),
+        }

@@ -42,6 +42,7 @@ def _register_blueprints(app: Flask) -> None:
     from backend.app.routes.payments import payments_bp
     from backend.app.routes.vouchers import vouchers_bp
     from backend.app.routes.merchant_dashboard import merchant_dashboard_bp
+    from backend.app.routes.admin import admin_bp
 
     prefix = "/api/v1"
 
@@ -51,3 +52,4 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(payments_bp, url_prefix=f"{prefix}/payments")
     app.register_blueprint(vouchers_bp, url_prefix=f"{prefix}/vouchers")
     app.register_blueprint(merchant_dashboard_bp, url_prefix=f"{prefix}/merchant")
+    app.register_blueprint(admin_bp, url_prefix=f"{prefix}/admin")

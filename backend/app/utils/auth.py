@@ -66,6 +66,27 @@ def token_required(f):
                 "message": "User does not exist."
             }), 401
 
+        if not user.is_active:
+            return jsonify({
+                "success": False,
+                "reason": "ACCOUNT_INACTIVE",
+                "message": "This account has been deactivated."
+            }), 403
+
         g.current_user = user
+        return f(*args, **kwargs)
+    return decorated
+
+
+def admin_required(f):
+    """Require a valid JWT for a user with the admin role."""
+    @wraps(f)
+    @token_required
+    def decorated(*args, **kwargs):
+        if g.current_user.role != "admin":
+            return jsonify({
+                "success": False,
+                "message": "Access restricted to admin accounts."
+            }), 403
         return f(*args, **kwargs)
     return decorated

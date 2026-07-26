@@ -8,6 +8,7 @@ from backend.app.models.merchant import Merchant
 from backend.app.models.service import Service
 from backend.app.models.payment import Payment
 from backend.app.models.voucher import Voucher
+from backend.app.models.support_ticket import SupportTicket
 from backend.app.utils.auth import generate_token
 
 
@@ -101,6 +102,43 @@ def merchant_token(merchant_user):
 def merchant_headers(merchant_token):
     """Fixture providing Authorization headers for merchant user."""
     return {"Authorization": f"Bearer {merchant_token}"}
+
+
+@pytest.fixture
+def admin_user(db_session):
+    """Fixture to create an admin user."""
+    user = User(
+        full_name="Admin User",
+        email="admin@kayaremit.test",
+        role="admin",
+        country="Malawi",
+        account_status="Active",
+    )
+    user.set_password("AdminPass123!")
+    db_session.add(user)
+    db_session.commit()
+    return user
+
+
+@pytest.fixture
+def admin_headers(admin_user):
+    """Fixture providing Authorization headers for admin user."""
+    return {"Authorization": f"Bearer {generate_token(admin_user.user_id)}"}
+
+
+@pytest.fixture
+def sample_support_ticket(db_session, diaspora_user):
+    """Fixture to create an open support ticket."""
+    ticket = SupportTicket(
+        user_id=diaspora_user.user_id,
+        category="Complaint",
+        subject="Merchant refused voucher",
+        description="The merchant declined to honor a valid voucher code.",
+        status="Open",
+    )
+    db_session.add(ticket)
+    db_session.commit()
+    return ticket
 
 
 @pytest.fixture

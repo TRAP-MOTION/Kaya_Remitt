@@ -16,6 +16,7 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.Text, nullable=False)
     role = db.Column(db.String(20), nullable=False, default="diaspora")
+    account_status = db.Column(db.String(20), nullable=False, default="Active")
     country = db.Column(db.String(100), nullable=True)
     created_at = db.Column(
         db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
@@ -31,6 +32,13 @@ class User(db.Model):
     notifications = db.relationship(
         "Notification", back_populates="user", lazy="dynamic"
     )
+    support_tickets = db.relationship(
+        "SupportTicket", back_populates="user", lazy="dynamic"
+    )
+
+    @property
+    def is_active(self):
+        return self.account_status.lower() == "active"
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -49,6 +57,7 @@ class User(db.Model):
             "full_name": self.full_name,
             "email": self.email,
             "role": self.role,
+            "account_status": self.account_status,
             "country": self.country,
             "created_at": formatted_date,
         }

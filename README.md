@@ -28,11 +28,12 @@ A multidisciplinary team working on design, research, development, and communica
 ## Tech Stack
 
 Frontend
-   -PHP
-   -JavaScript (React framework)
+   -CSS
+   -HTML
+   -JavaScript
 
 Backend
-   -Python
+   -Python (Flask)
 
 Deliverables / Links
     -[Pitch Deck](link)

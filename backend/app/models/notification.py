@@ -16,6 +16,7 @@ class Notification(db.Model):
     )
     title = db.Column(db.String(150), nullable=False)
     message = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(50), nullable=False, default="General", index=True)
     is_read = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(
         db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
