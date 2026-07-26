@@ -2,597 +2,369 @@
 
 ## Overview
 
-KayaRemit follows a three-layer web application architecture consisting of:
-
-1.Frontend Layer
-2.Backend Layer
-3.Database Layer
-
-The architecture is designed to provide a secure, scalable, and maintainable platform for direct-to-merchant diaspora payments.
-
-The system allows diaspora users to interact with merchants through a web interface, while the backend manages authentication, payments, voucher generation, and transaction verification.
+KayaRemit follows a **Three-Tier Architecture**, separating the application into three independent layers: the Presentation Layer, the Application Layer, and the Data Layer. This architecture improves scalability, maintainability, security, and overall system performance.
 
 ---
 
-# 1. High-Level Architecture
+# Architecture Diagram
 
 ```
-                    USERS
-
-        ┌────────────────────────┐
-        │                        │
-        │   Diaspora User        │
-        │                        │
-        └───────────┬────────────┘
-                    │
-                    │
-        ┌───────────▼────────────┐
-        │                        │
-        │   Web Frontend         │
-        │ HTML                   │
-        │ Tailwind CSS           │
-        │ JavaScript             │
-        │                        │
-        └───────────┬────────────┘
-                    │
-                    │ HTTP Requests
-                    │ REST API
-                    │
-        ┌───────────▼────────────┐
-        │                        │
-        │   Backend API          │
-        │ Python                 │
-        │ Authentication         │
-        │ Business Logic         │
-        │ Payment Processing     │
-        │ Voucher Management     │
-        │                        │
-        └───────────┬────────────┘
-                    │
-                    │ Database Queries
-                    │
-        ┌───────────▼────────────┐
-        │                        │
-        │   PostgreSQL Database  │
-        │                        │
-        │ Users                  │
-        │ Merchants              │
-        │ Services               │
-        │ Payments               │
-        │ Vouchers               │
-        │                        │
-        └────────────────────────┘
-
-
-        ┌────────────────────────┐
-        │ Merchant Portal        │
-        │ Voucher Verification   │
-        │ Transaction Management │
-        └────────────────────────┘
+                           +--------------------------------------+
+                           |            End Users                 |
+                           |--------------------------------------|
+                           | • Individual Users                   |
+                           | • Diaspora Users                     |
+                           | • Merchants                          |
+                           | • Administrators                     |
+                           +------------------+-------------------+
+                                              |
+                                              |
+                                              ▼
++--------------------------------------------------------------------------+
+|                        Presentation Layer (Frontend)                      |
+|--------------------------------------------------------------------------|
+| HTML5                                                                    |
+| Tailwind CSS                                                             |
+| JavaScript                                                               |
+|                                                                          |
+| Responsibilities                                                         |
+| - User Interface                                                         |
+| - Responsive Design                                                      |
+| - Form Validation                                                        |
+| - Dashboard Views                                                        |
+| - Merchant Catalogue                                                     |
+| - Payment Pages                                                          |
+| - Voucher Display                                                        |
++--------------------------------------------------------------------------+
+                                              |
+                                   HTTP / HTTPS Requests
+                                              |
+                                              ▼
++--------------------------------------------------------------------------+
+|                    Application Layer (Backend API)                       |
+|--------------------------------------------------------------------------|
+| Python                                                                   |
+| REST API                                                                 |
+|                                                                          |
+| Responsibilities                                                         |
+| - Authentication                                                         |
+| - Authorization                                                          |
+| - Business Logic                                                         |
+| - Merchant Management                                                    |
+| - Payment Processing                                                     |
+| - Voucher Generation                                                     |
+| - Voucher Verification                                                   |
+| - Transaction Management                                                 |
+| - Notifications                                                          |
+| - Input Validation                                                       |
+| - Error Handling                                                         |
++--------------------------------------------------------------------------+
+                                              |
+                                        SQL Queries
+                                              |
+                                              ▼
++--------------------------------------------------------------------------+
+|                     Data Layer (PostgreSQL Database)                     |
+|--------------------------------------------------------------------------|
+| Tables                                                                   |
+|                                                                          |
+| - Users                                                                  |
+| - Merchant Categories                                                    |
+| - Merchants                                                              |
+| - Services                                                               |
+| - Payments                                                               |
+| - Vouchers                                                               |
+| - Transactions                                                           |
+| - Notifications                                                          |
+|                                                                          |
+| Responsibilities                                                         |
+| - Data Storage                                                           |
+| - Data Retrieval                                                         |
+| - Relationship Management                                                |
+| - Data Integrity                                                         |
+| - Backup Support                                                         |
++--------------------------------------------------------------------------+
 ```
 
 ---
 
-# 2. Frontend Architecture
+# Architecture Components
 
-## Purpose
+## 1. Presentation Layer
 
-The frontend provides the user interface where users interact with KayaRemit.
+### Description
 
-It is responsible for:
+The Presentation Layer is responsible for all user interactions with the system. It provides a responsive and user-friendly interface that allows users to access KayaRemit through a web browser.
 
--Displaying information.
--Collecting user input.
--Communicating with the backend API.
--Showing payment and voucher status.
+### Technologies
 
----
+-HTML5
+-Tailwind CSS
+-JavaScript
 
-## Technologies
+### Responsibilities
 
-### HTML
-
-Used for:
-
--Page structure.
--Forms.
--Content organisation.
-
----
-
-### Tailwind CSS
-
-Used for:
-
--Responsive design.
--User interface styling.
--Layout management.
+-Display web pages
+-User registration
+-User login
+-Merchant browsing
+-Service selection
+-Payment interface
+-Voucher display
+-Transaction history
+-Notifications
+-Profile management
+-Form validation
+-Responsive design
 
 ---
 
-### JavaScript
+# 2. Application Layer
 
-Used for:
+### Description
 
--Dynamic interactions.
--API requests.
--Form validation.
--Updating interface content.
+The Application Layer contains the core business logic of KayaRemit. It processes user requests, validates data, communicates with the database, and returns appropriate responses to the frontend.
 
----
+### Technology
 
-# Frontend Pages
+-Python
+-REST API
 
-## Public Pages
+### Responsibilities
 
-### Landing Page
-
-Purpose:
-
-Introduce KayaRemit and explain the solution.
-
-Contains:
-
--Problem statement.
--Solution overview.
--How it works.
--Benefits.
-
----
-
-### Registration Page
-
-Allows users to create accounts.
-
-User types:
-
--Diaspora User.
--Merchant.
+-User authentication
+-User authorization
+-Merchant management
+-Category management
+-Service management
+-Payment processing
+-Voucher generation
+-Voucher verification
+-Transaction management
+-Notification management
+-Profile management
+-API response generation
+-Error handling
+-Data validation
 
 ---
 
-### Login Page
+# 3. Data Layer
 
-Allows authenticated access to the platform.
+### Description
 
----
+The Data Layer stores all persistent application data. PostgreSQL is used because it provides reliability, security, scalability, and strong relational database capabilities.
 
-# Diaspora User Pages
+### Technology
 
-## Dashboard
+-PostgreSQL
 
-Displays:
+### Database Tables
 
--Available merchants.
--Recent payments.
--Active vouchers.
--Transaction status.
+-Users
+-Merchant Categories
+-Merchants
+-Services
+-Payments
+-Vouchers
+-Transactions
+-Notifications
 
----
+### Responsibilities
 
-## Merchant Directory
-
-Allows users to:
-
--Search merchants.
--View merchant information.
--Browse available services.
-
----
-
-## Service Selection Page
-
-Allows users to select:
-
--Product.
--Service.
--Payment amount.
+-Store user accounts
+-Store merchant information
+-Store products and services
+-Store payment records
+-Store digital vouchers
+-Store notifications
+-Maintain data integrity
+-Manage relationships between tables
 
 ---
 
-## Payment Confirmation Page
+# System Workflow
 
-Displays:
-
--Merchant details.
--Selected service.
--Amount.
--Beneficiary information.
-
----
-
-## Voucher Page
-
-Displays generated payment voucher.
-
-Contains:
-
--Voucher ID.
--Transaction reference.
--Merchant.
--Amount.
--Status.
-
----
-
-# Merchant Pages
-
-## Merchant Dashboard
-
-Allows merchants to:
-
--View incoming payments.
--Verify vouchers.
--Redeem vouchers.
-
----
-
-## Voucher Verification Page
-
-Allows merchants to:
-
--Enter voucher ID.
--Check validity.
--Confirm transaction status.
-
----
-
-# 3. Backend Architecture
-
-## Purpose
-
-The backend manages the core functionality of KayaRemit.
-
-It handles:
-
--Authentication.
--User management.
--Merchant management.
--Payment processing.
--Voucher generation.
--Transaction records.
-
----
-
-# Backend Components
-
-## Authentication Service
-
-Responsible for:
-
--User registration.
--Login.
--Token generation.
--Access control.
-
-Technology:
-
-JWT Authentication
-
----
-
-## User Management Service
-
-Handles:
-
--User profiles.
--User roles.
--Account information.
-
-Roles:
-
--Diaspora User.
--Merchant.
--Administrator.
-
----
-
-## Merchant Management Service
-
-Handles:
-
--Merchant profiles.
--Merchant categories.
--Available services.
--Verification status.
-
----
-
-## Payment Service
-
-Responsible for:
-
--Creating payment requests.
--Recording transactions.
--Updating payment status.
-
-Payment statuses:
-
--Pending.
--Completed.
--Cancelled.
-
----
-
-## Voucher Service
-
-Responsible for:
-
--Creating digital vouchers.
--Generating unique voucher IDs.
--Validating vouchers.
--Updating redemption status.
-
-Voucher statuses:
-
--Active.
--Redeemed.
--Expired.
-
----
-
-# 4. API Communication Layer
-
-The frontend communicates with the backend using REST API endpoints.
-
-Example:
+The following sequence illustrates how the system processes a payment.
 
 ```
-User Login
+User
+   │
+   ▼
+Login/Register
+   │
+   ▼
+Dashboard
+   │
+   ▼
+Browse Merchants
+   │
+   ▼
+Select Merchant
+   │
+   ▼
+Select Service
+   │
+   ▼
+Confirm Payment
+   │
+   ▼
+Backend Validates Request
+   │
+   ▼
+Payment Stored
+   │
+   ▼
+Voucher Generated
+   │
+   ▼
+Beneficiary Receives Voucher
+   │
+   ▼
+Merchant Verifies Voucher
+   │
+   ▼
+Goods or Service Delivered
+```
+
+---
+
+# Request Flow
+
+```
+Browser
+
+↓
+
+Frontend (HTML + Tailwind + JavaScript)
+
+↓
+
+Python REST API
+
+↓
+
+Business Logic
+
+↓
+
+PostgreSQL Database
+
+↓
+
+Business Logic
+
+↓
+
+REST API Response
+
+↓
 
 Frontend
 
-        ↓
+↓
 
-POST /api/v1/auth/login
-
-        ↓
-
-Backend Authentication Service
-
-        ↓
-
-JWT Token Returned
-
-        ↓
-
-User Dashboard Access
+User
 ```
 
 ---
 
-# 5. Database Architecture
-
-## Database Technology
-
-PostgreSQL
-
-The database stores all permanent system information.
-
----
-
-# Database Entities
-
-## Users Table
-
-Stores user information.
-
-Fields:
-
-- user_id
-- full_name
-- email
-- phone
-- password_hash
-- role
-- created_at
-
----
-
-## Merchants Table
-
-Stores registered businesses.
-
-Fields:
-
-- merchant_id
-- business_name
-- category
-- location
-- verification_status
-- created_at
-
----
-
-## Services Table
-
-Stores merchant services.
-
-Fields:
-
-- service_id
-- merchant_id
-- service_name
-- price
-- description
-
----
-
-## Payments Table
-
-Stores payment transactions.
-
-Fields:
-
-- payment_id
-- user_id
-- merchant_id
-- service_id
-- amount
-- status
-- created_at
-
----
-
-## Vouchers Table
-
-Stores digital voucher information.
-
-Fields:
-
-- voucher_id
-- payment_id
-- voucher_code
-- status
-- redeemed_at
-
----
-
-# 6. Security Architecture
-
-Security is implemented across all layers.
-
----
-
-## Authentication Security
-
-Measures:
-
-- Password hashing.
-- JWT authentication.
-- Protected API routes.
-
----
-
-## Data Security
-
-Measures:
-
-- Database access control.
-- Input validation.
-- Secure queries.
-- Transaction logging.
-
----
-
-## Payment Security
-
-Measures:
-
-- Unique transaction references.
-- Unique voucher identifiers.
-- Voucher verification before redemption.
-- Prevention of duplicate redemption.
-
----
-
-# 7. Complete System Workflow
+# Authentication Flow
 
 ```
-1. User Registration
+User
 
-        ↓
+↓
 
-2. User Authentication
+Login
 
-        ↓
+↓
 
-3. Browse Verified Merchants
+Validate Credentials
 
-        ↓
+↓
 
-4. Select Service
+Password Verification
 
-        ↓
+↓
 
-5. Create Payment Request
+JWT Token Generated
 
-        ↓
+↓
 
-6. Payment Recorded
+Token Returned
 
-        ↓
+↓
 
-7. Digital Voucher Generated
+Authenticated Requests
 
-        ↓
+↓
 
-8. Merchant Receives Voucher
-
-        ↓
-
-9. Voucher Verification
-
-        ↓
-
-10. Voucher Redeemed
-
-        ↓
-
-11. Transaction Completed
+Protected Resources
 ```
 
 ---
 
-# 8. Deployment Architecture (Future)
+# Security Architecture
 
-The production system can be deployed using:
+The architecture incorporates several security mechanisms.
 
-```
-                 Users
+### Authentication
 
-                   ↓
+-Secure user login
+-Password hashing
+-JWT authentication
 
-              Web Server
+### Authorization
 
-                   ↓
+-Role-Based Access Control
+-User permissions
+-Merchant permissions
+-Administrator permissions
 
-             Backend API
+### Data Security
 
-                   ↓
-
-            PostgreSQL Database
-
-                   ↓
-
-          External Payment Services
-```
-
-Future integrations:
-
--Mobile money providers.
--Banks.
--Payment gateways.
--Notification services.
+-Input validation
+-Secure API communication
+-Transaction logging
+-Unique transaction references
+-Voucher verification
 
 ---
 
-# 9. Design Principles
+# Advantages of the Architecture
 
-The KayaRemit architecture follows these principles:
+The selected architecture provides several benefits.
 
-## Scalability
+-Modular design
+-Easy maintenance
+-High scalability
+-Improved security
+-Separation of concerns
+-Faster development
+-Easier debugging
+-Future API integrations
+-Cloud deployment readiness
 
-The system can grow by adding new merchants, users, and payment integrations.
+---
 
-## Security
+# Future Architecture Enhancements
 
-Financial information is protected through authentication and validation.
+Future versions of KayaRemit may integrate additional services, including:
 
-## Maintainability
-
-The separation between frontend, backend, and database makes future development easier.
-
-## User Focus
-
-The architecture prioritises a simple payment journey:
-
-Choose → Pay → Verify → Complete.
+-Mobile Money APIs
+-Commercial Bank APIs
+-QR Code Payment Services
+-SMS Gateway
+-Email Notification Service
+-Push Notifications
+-Fraud Detection Engine
+-Reporting and Analytics
+-Cloud Storage
+-Payment Gateway Integration
 
 ---
 
 # Conclusion
 
-The KayaRemit architecture provides a foundation for a secure and scalable direct-to-merchant diaspora payment platform.
-
-The MVP focuses on proving the core concept of transparent financial support while maintaining a structure that can support future expansion into mobile payments, banking integrations, and advanced financial services.
+The KayaRemit architecture follows a secure and scalable three-tier design that separates the user interface, application logic, and data management into independent layers. This approach improves maintainability, enhances security, simplifies future enhancements, and provides a strong foundation for integrating additional financial services as the platform evolves.
