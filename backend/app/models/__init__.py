@@ -6,6 +6,7 @@ from backend.app.models.payment import Payment
 from backend.app.models.voucher import Voucher
 from backend.app.models.transaction import Transaction
 from backend.app.models.notification import Notification
+from backend.app.models.support_ticket import SupportTicket
 
 __all__ = [
     "User",
@@ -16,4 +17,5 @@ __all__ = [
     "Voucher",
     "Transaction",
     "Notification",
+    "SupportTicket",
 ]

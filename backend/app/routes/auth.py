@@ -83,6 +83,13 @@ def login():
             "message": "The email or password provided is incorrect."
         }), 401
 
+    if not user.is_active:
+        return jsonify({
+            "success": False,
+            "reason": "ACCOUNT_INACTIVE",
+            "message": "This account has been deactivated."
+        }), 403
+
     token = generate_token(user.user_id)
 
     return jsonify({

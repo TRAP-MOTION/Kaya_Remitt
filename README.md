@@ -213,12 +213,11 @@ This prototype demonstrates the core functionality of KayaRemit, including secur
 
 ## Team
 
-KayaRemit Development Team
+ Frontend
+   -CSS
+   -HTML
+   -JavaScript
 
--Frontend Development
--Backend Development
--Database Design
--Research
--Documentation
--UI/UX Design
+Backend
+   -Python (Flask)
 
