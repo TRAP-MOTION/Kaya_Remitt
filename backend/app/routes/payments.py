@@ -36,7 +36,7 @@ def create_payment():
     if not merchant or not merchant.verified:
         return jsonify({
             "success": False,
-            "message": "Merchant not found or not verified."
+            "message": "Invalid or unverified merchant.."
         }), 404
 
     service = db.session.execute(
