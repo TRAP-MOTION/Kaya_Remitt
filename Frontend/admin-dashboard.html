@@ -58,10 +58,10 @@
         <!-- Admin Profile & Logout -->
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-full bg-red-100 text-red-700 font-bold flex items-center justify-center text-sm border border-red-200">
-            AD
+            IK
           </div>
           <div class="hidden sm:block text-left text-xs">
-            <p class="font-bold text-gray-800">System Admin</p>
+            <p class="font-bold text-gray-800">Innocent Kapalamula</p>
             <p class="text-gray-500">Superuser Access</p>
           </div>
           <a href="login.html" class="text-xs text-gray-500 hover:text-red-600 font-semibold ml-2 border-l pl-3">Logout</a>
@@ -146,7 +146,6 @@
                 <tr id="emptyMerchantRow">
                   <td colspan="4" class="p-8 text-center text-gray-400">
                     <div class="flex flex-col items-center justify-center space-y-1">
-                      <span class="text-2xl"></span>
                       <p class="font-semibold text-gray-500">No merchant accounts registered yet</p>
                       <p class="text-[11px]">When merchants sign up, they will appear here for verification.</p>
                     </div>
@@ -159,12 +158,17 @@
 
         <!-- 2. USER ACCOUNT CONTROL -->
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+          <div class="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 class="text-base font-bold text-gray-900">User Account Control</h2>
               <p class="text-xs text-gray-500">Activate or deactivate user access across the platform</p>
             </div>
-            <input type="text" placeholder="Search user email..." class="text-xs border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-600" />
+            <input 
+              type="text" 
+              id="userSearchInput"
+              placeholder="Search user email..." 
+              class="text-xs border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-600 w-full sm:w-64" 
+            />
           </div>
 
           <div class="overflow-x-auto">
@@ -174,7 +178,7 @@
                   <th class="p-4">User</th>
                   <th class="p-4">Role</th>
                   <th class="p-4">Account Status</th>
-                  <th class="p-4 text-right">Toggle Account</th>
+                  <th class="p-4 text-right">Toggle Access</th>
                 </tr>
               </thead>
               <tbody id="userTableBody" class="divide-y divide-gray-100 text-xs font-medium">
@@ -182,7 +186,6 @@
                 <tr id="emptyUserRow">
                   <td colspan="4" class="p-8 text-center text-gray-400">
                     <div class="flex flex-col items-center justify-center space-y-1">
-                      <span class="text-2xl"></span>
                       <p class="font-semibold text-gray-500">No user accounts found</p>
                       <p class="text-[11px]">Registered senders and merchants will be listed here.</p>
                     </div>
@@ -198,7 +201,6 @@
       <!-- RIGHT SECTION: SUPPORT & COMPLAINTS (4 COLS) -->
       <div class="lg:col-span-4 space-y-8">
         
-        <!-- SUPPORT & COMPLAINTS EMPTY STATE -->
         <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b border-gray-100 pb-3">
             <h2 class="text-base font-bold text-gray-900">Support & Complaints</h2>
@@ -263,7 +265,8 @@
 
     function sendWarning(e) {
       e.preventDefault();
-      alert('Email Warning Notification Sent Successfully!');
+      const recipient = document.getElementById('warningRecipient').value;
+      alert(`Email Warning Notification sent successfully to ${recipient}!`);
       closeModal('warningModal');
     }
   </script>
