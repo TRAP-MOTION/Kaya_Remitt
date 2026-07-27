@@ -64,7 +64,7 @@
             <p id="navStoreName" class="font-bold text-gray-800">My Business Store</p>
             <p class="text-gray-500">Verified Merchant</p>
           </div>
-          <a href="login.html" class="text-xs text-gray-500 hover:text-red-600 font-semibold ml-2 border-l pl-3">Logout</a>
+          <button type="button" onclick="Session.logout()" class="text-xs text-gray-500 hover:text-red-600 font-semibold ml-2 border-l pl-3">Logout</button>
         </div>
 
       </div>
@@ -112,14 +112,42 @@
     <!-- MAIN TWO COLUMN LAYOUT -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       
-      <!-- LEFT COLUMN: VOUCHER APPROVAL & REDEMPTION HISTORY (8 COLS) -->
+      <!-- LEFT COLUMN: PAYMENTS + VOUCHER REDEMPTION (8 COLS) -->
       <div class="lg:col-span-8 space-y-8">
+
+        <!-- PENDING PAYMENT REQUESTS -->
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-gray-100">
+            <h2 class="text-base font-bold text-gray-900">Incoming Payment Requests</h2>
+            <p class="text-xs text-gray-500">Accept or deny payments before customers can check out</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase border-b border-gray-200">
+                  <th class="p-4">Beneficiary</th>
+                  <th class="p-4">Service</th>
+                  <th class="p-4">Amount</th>
+                  <th class="p-4">Status</th>
+                  <th class="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="paymentsTableBody" class="divide-y divide-gray-100 text-xs font-medium">
+                <tr id="emptyPaymentsRow">
+                  <td colspan="5" class="p-8 text-center text-gray-400">
+                    <p class="font-semibold text-gray-500">No payment requests yet</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
         
         <!-- VOUCHER APPROVAL CARD -->
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
           <div class="border-b border-gray-100 pb-3">
             <h2 class="text-base font-bold text-gray-900">Approve Customer Voucher</h2>
-            <p class="text-xs text-gray-500">Enter the voucher code sent to the customer's email to verify and redeem funds.</p>
+            <p class="text-xs text-gray-500">Enter the voucher code to verify and redeem funds.</p>
           </div>
 
           <form onsubmit="handleVoucherApprove(event)" class="flex flex-col sm:flex-row gap-3">
@@ -134,17 +162,18 @@
               type="submit" 
               class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-xl transition shadow"
             >
-              Verify & Approve
+              Verify &amp; Redeem
             </button>
           </form>
+          <p id="voucherError" class="hidden text-xs text-red-600"></p>
         </div>
 
-        <!-- REDEMPTION HISTORY (EMPTY STATE BY DEFAULT) -->
+        <!-- REDEMPTION / TRANSACTION HISTORY -->
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div class="p-5 border-b border-gray-100 flex justify-between items-center">
             <div>
-              <h2 class="text-base font-bold text-gray-900">Redemption History</h2>
-              <p class="text-xs text-gray-500">Log of customer vouchers redeemed at your store</p>
+              <h2 class="text-base font-bold text-gray-900">Transaction History</h2>
+              <p class="text-xs text-gray-500">All payments directed to your store</p>
             </div>
           </div>
 
@@ -152,8 +181,8 @@
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase border-b border-gray-200">
-                  <th class="p-4">Voucher Code</th>
-                  <th class="p-4">Date Approved</th>
+                  <th class="p-4">Beneficiary</th>
+                  <th class="p-4">Service</th>
                   <th class="p-4">Amount</th>
                   <th class="p-4 text-right">Status</th>
                 </tr>
@@ -162,9 +191,8 @@
                 <tr id="emptyRedemptionRow">
                   <td colspan="4" class="p-8 text-center text-gray-400">
                     <div class="flex flex-col items-center justify-center space-y-1">
-                      <span class="text-2xl"></span>
-                      <p class="font-semibold text-gray-500">No voucher redemptions yet</p>
-                      <p class="text-[11px]">Approved voucher transactions will appear here.</p>
+                      <p class="font-semibold text-gray-500">No transactions yet</p>
+                      <p class="text-[11px]">Payments and redemptions will appear here.</p>
                     </div>
                   </td>
                 </tr>
@@ -279,100 +307,205 @@
     </div>
   </div>
 
+  <script src="services/api.js"></script>
   <script>
     let currentBalance = 0;
     let redeemedVouchers = 0;
     let pendingPayouts = 0;
 
     function openModal(id) {
-      document.getElementById(id).classList.remove('hidden');
-      document.getElementById(id).classList.add('flex');
+      document.getElementById(id).classList.remove("hidden");
+      document.getElementById(id).classList.add("flex");
     }
 
     function closeModal(id) {
-      document.getElementById(id).classList.add('hidden');
-      document.getElementById(id).classList.remove('flex');
+      document.getElementById(id).classList.add("hidden");
+      document.getElementById(id).classList.remove("flex");
     }
 
-    function handleVoucherApprove(e) {
-      e.preventDefault();
-      const codeInput = document.getElementById('voucherCodeInput');
-      const code = codeInput.value.trim().toUpperCase();
-
-      // Simulated standard voucher value for demo
-      const voucherAmount = 25000;
-
-      // Update counters
-      currentBalance += voucherAmount;
-      redeemedVouchers += 1;
-
-      document.getElementById('storeBalance').textContent = `MWK ${currentBalance.toLocaleString()}`;
-      document.getElementById('vouchersCount').textContent = redeemedVouchers;
-
-      // Remove empty row if present
-      const emptyRow = document.getElementById('emptyRedemptionRow');
-      if (emptyRow) emptyRow.remove();
-
-      // Append new redemption row
-      const tbody = document.getElementById('redemptionTableBody');
-      const now = new Date();
-      const formattedDate = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      const newRow = document.createElement('tr');
-      newRow.className = 'hover:bg-gray-50 transition';
-      newRow.innerHTML = `
-        <td class="p-4 font-mono font-bold text-gray-800">${code}</td>
-        <td class="p-4 text-gray-500">${formattedDate}</td>
-        <td class="p-4 font-bold text-gray-900">MWK ${voucherAmount.toLocaleString()}</td>
-        <td class="p-4 text-right">
-          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            Redeemed
-          </span>
-        </td>
-      `;
-      tbody.prepend(newRow);
-
-      alert(`Voucher ${code} approved successfully for MWK ${voucherAmount.toLocaleString()}!`);
-      codeInput.value = '';
+    function statusBadge(status) {
+      const map = {
+        AwaitingAcceptance: "bg-amber-50 text-amber-700 border-amber-200",
+        Accepted: "bg-blue-50 text-blue-700 border-blue-200",
+        Pending: "bg-indigo-50 text-indigo-700 border-indigo-200",
+        COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        REDEEMED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        Denied: "bg-red-50 text-red-700 border-red-200",
+      };
+      const cls = map[status] || "bg-gray-50 text-gray-700 border-gray-200";
+      return `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${cls}">${status}</span>`;
     }
 
-    function handleProfileUpdate(e) {
+    async function loadTransactions() {
+      const paymentsBody = document.getElementById("paymentsTableBody");
+      const historyBody = document.getElementById("redemptionTableBody");
+
+      try {
+        const res = await MerchantDashboardAPI.transactions();
+        const rows = res.data || [];
+
+        const awaiting = rows.filter((r) => r.status === "AwaitingAcceptance");
+        const redeemed = rows.filter((r) => String(r.status).toUpperCase() === "REDEEMED");
+        const completed = rows.filter((r) =>
+          ["COMPLETED", "REDEEMED"].includes(String(r.status).toUpperCase())
+        );
+
+        redeemedVouchers = redeemed.length;
+        currentBalance = completed.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+        document.getElementById("vouchersCount").textContent = redeemedVouchers;
+        document.getElementById("storeBalance").textContent =
+          `MWK ${currentBalance.toLocaleString()}`;
+
+        if (!awaiting.length) {
+          paymentsBody.innerHTML = `
+            <tr id="emptyPaymentsRow">
+              <td colspan="5" class="p-8 text-center text-gray-400">
+                <p class="font-semibold text-gray-500">No payment requests awaiting action</p>
+              </td>
+            </tr>`;
+        } else {
+          paymentsBody.innerHTML = awaiting
+            .map(
+              (r) => `
+            <tr class="hover:bg-gray-50">
+              <td class="p-4 font-semibold text-gray-800">${r.beneficiary_name || "—"}</td>
+              <td class="p-4 text-gray-600">${r.service || "—"}</td>
+              <td class="p-4 font-bold">MWK ${Number(r.amount || 0).toLocaleString()}</td>
+              <td class="p-4">${statusBadge(r.status)}</td>
+              <td class="p-4 text-right space-x-2">
+                <button type="button" onclick="acceptPayment('${r.transaction_id}')"
+                  class="text-emerald-700 font-bold hover:underline">Accept</button>
+                <button type="button" onclick="denyPayment('${r.transaction_id}')"
+                  class="text-red-600 font-bold hover:underline">Deny</button>
+              </td>
+            </tr>`
+            )
+            .join("");
+        }
+
+        if (!rows.length) {
+          historyBody.innerHTML = `
+            <tr id="emptyRedemptionRow">
+              <td colspan="4" class="p-8 text-center text-gray-400">
+                <p class="font-semibold text-gray-500">No transactions yet</p>
+              </td>
+            </tr>`;
+        } else {
+          historyBody.innerHTML = rows
+            .map(
+              (r) => `
+            <tr class="hover:bg-gray-50">
+              <td class="p-4 font-semibold text-gray-800">${r.beneficiary_name || "—"}</td>
+              <td class="p-4 text-gray-600">${r.service || "—"}</td>
+              <td class="p-4 font-bold">MWK ${Number(r.amount || 0).toLocaleString()}</td>
+              <td class="p-4 text-right">${statusBadge(r.status)}</td>
+            </tr>`
+            )
+            .join("");
+        }
+      } catch (err) {
+        paymentsBody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-600">${err.message}</td></tr>`;
+        historyBody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-red-600">${err.message}</td></tr>`;
+      }
+    }
+
+    async function acceptPayment(paymentId) {
+      try {
+        await MerchantDashboardAPI.acceptPayment(paymentId);
+        await loadTransactions();
+        alert("Payment accepted. The sender can now check out.");
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function denyPayment(paymentId) {
+      if (!confirm("Deny this payment request?")) return;
+      try {
+        await MerchantDashboardAPI.denyPayment(paymentId);
+        await loadTransactions();
+        alert("Payment denied.");
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function handleVoucherApprove(e) {
       e.preventDefault();
-      const name = document.getElementById('profileStoreName').value;
-      document.getElementById('navStoreName').textContent = name;
+      const errorEl = document.getElementById("voucherError");
+      const codeInput = document.getElementById("voucherCodeInput");
+      const code = codeInput.value.trim();
+      errorEl.classList.add("hidden");
 
-      // Update navbar avatar initials
-      const initials = name.split(' ').map(n => n[0]).join('').substring(0, 3).toUpperCase();
-      document.getElementById('navAvatar').textContent = initials || 'MBS';
+      try {
+        const verified = await VoucherAPI.verify(code);
+        const amount = verified.data?.amount;
+        await VoucherAPI.redeem(code);
+        codeInput.value = "";
+        await loadTransactions();
+        const amountLabel =
+          amount != null ? ` for MWK ${Number(amount).toLocaleString()}` : "";
+        alert(`Voucher ${code} redeemed successfully${amountLabel}.`);
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.classList.remove("hidden");
+      }
+    }
 
-      alert('Merchant profile updated successfully!');
+    async function handleProfileUpdate(e) {
+      e.preventDefault();
+      try {
+        const name = document.getElementById("profileStoreName").value.trim();
+        await ProfileAPI.update({
+          full_name: name,
+        });
+        const profile = await ProfileAPI.get();
+        Session.setUser(profile.data);
+        document.getElementById("navStoreName").textContent =
+          profile.data.full_name || name;
+        const initials = (profile.data.full_name || name)
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .substring(0, 3)
+          .toUpperCase();
+        document.getElementById("navAvatar").textContent = initials || "MBS";
+        alert("Profile updated successfully.");
+      } catch (err) {
+        alert(err.message);
+      }
     }
 
     function handleWithdraw(e) {
       e.preventDefault();
-      const amountInput = document.getElementById('withdrawAmount');
-      const amount = parseFloat(amountInput.value);
-
-      if (isNaN(amount) || amount <= 0) {
-        alert('Please enter a valid withdrawal amount.');
-        return;
-      }
-
-      if (amount > currentBalance) {
-        alert(`Insufficient balance! Your current available balance is MWK ${currentBalance.toLocaleString()}.`);
-        return;
-      }
-
-      currentBalance -= amount;
-      pendingPayouts += amount;
-
-      document.getElementById('storeBalance').textContent = `MWK ${currentBalance.toLocaleString()}`;
-      document.getElementById('pendingPayouts').textContent = `MWK ${pendingPayouts.toLocaleString()}`;
-
-      alert(`Withdrawal request of MWK ${amount.toLocaleString()} submitted successfully!`);
-      amountInput.value = '';
-      closeModal('withdrawModal');
+      alert(
+        "Withdrawals are simulated in sandbox mode and are not available via the API yet."
+      );
+      closeModal("withdrawModal");
     }
+
+    async function initMerchantDashboard() {
+      if (!Session.requireRole("merchant")) return;
+
+      const user = Session.getUser();
+      if (user) {
+        document.getElementById("navStoreName").textContent =
+          user.full_name || "Merchant";
+        document.getElementById("profileStoreName").value = user.full_name || "";
+        document.getElementById("profileEmail").value = user.email || "";
+        const initials = (user.full_name || "M")
+          .split(" ")
+          .map((p) => p[0])
+          .join("")
+          .slice(0, 3)
+          .toUpperCase();
+        document.getElementById("navAvatar").textContent = initials;
+      }
+
+      await loadTransactions();
+    }
+
+    initMerchantDashboard();
   </script>
 </body>
 </html>
