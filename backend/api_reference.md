@@ -210,9 +210,18 @@ GET /api/v1/merchants/{merchant_id}/services
 
 # 4. Payments
 
+Payment lifecycle:
+
+1. User creates a payment request → `AwaitingAcceptance`
+2. Merchant accepts → `Accepted` (payable) or denies → `Denied`
+3. User starts checkout on an accepted payment → `Pending` + `checkout_url`
+4. After PayChangu payment, voucher generation verifies and marks → `COMPLETED`
+
+---
+
 ## Create Payment
 
-Creates a payment request for a selected merchant service.
+Creates a payment request for a selected merchant service. The request waits for merchant acceptance before checkout is allowed.
 
 ### Endpoint
 
@@ -239,13 +248,38 @@ POST /api/v1/payments
   "message": "Payment created successfully.",
   "data": {
     "payment_id": "PAY001",
+    "status": "AwaitingAcceptance"
+  }
+}
+```
+
+---
+
+## Start Checkout
+
+Initiates PayChangu checkout for an **Accepted** payment only.
+
+### Endpoint
+
+```http
+POST /api/v1/payments/{payment_id}/checkout
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Checkout initiated successfully.",
+  "data": {
+    "payment_id": "PAY001",
     "status": "Pending",
     "checkout_url": "https://checkout.paychangu.com/923677185321"
   }
 }
 ```
 
-The frontend should redirect the user to `checkout_url` to complete payment on PayChangu. Payment status becomes `COMPLETED` only after PayChangu verification during voucher generation.
+The frontend should redirect the user to `checkout_url` to complete payment on PayChangu.
 
 ---
 
@@ -283,7 +317,9 @@ GET /api/v1/payments/history
 
 Creates a digital voucher after successful payment.
 
-If the payment is still `Pending`, the backend verifies the transaction with PayChangu using the stored `transaction_reference`. On success it marks the payment `COMPLETED`, simulates the merchant payout (sandbox), then issues the voucher.
+If the payment is still `Pending` (checkout already started), the backend verifies the transaction with PayChangu using the stored `transaction_reference`. On success it marks the payment `COMPLETED`, simulates the merchant payout (sandbox), then issues the voucher.
+
+Payments in `AwaitingAcceptance`, `Accepted`, or `Denied` cannot generate a voucher.
 
 ### Endpoint
 
@@ -393,8 +429,10 @@ GET /api/v1/merchant/transactions
   "data": [
     {
       "transaction_id": "PAY001",
+      "beneficiary_name": "Mary Banda",
+      "service": "Grocery Package",
       "amount": 50000,
-      "status": "REDEEMED"
+      "status": "AwaitingAcceptance"
     }
   ]
 }
@@ -402,7 +440,142 @@ GET /api/v1/merchant/transactions
 
 ---
 
-# 7. User Profile
+## Accept Payment
+
+Merchant accepts a payment that is in `AwaitingAcceptance`. Once accepted, the diaspora user can start checkout.
+
+### Endpoint
+
+```http
+PATCH /api/v1/merchant/payments/{payment_id}/accept
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Payment accepted successfully.",
+  "data": {
+    "payment_id": "PAY001",
+    "status": "Accepted"
+  }
+}
+```
+
+The diaspora user receives a notification that the payment was accepted.
+
+---
+
+## Deny Payment
+
+Merchant denies a payment that is in `AwaitingAcceptance`. Denied payments cannot be checked out.
+
+### Endpoint
+
+```http
+PATCH /api/v1/merchant/payments/{payment_id}/deny
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Payment denied.",
+  "data": {
+    "payment_id": "PAY001",
+    "status": "Denied"
+  }
+}
+```
+
+The diaspora user receives a notification that the payment was denied.
+
+---
+
+# 7. Notifications
+
+User notification endpoints. Requires JWT authentication.
+
+## List Notifications
+
+Returns all notifications for the authenticated user, newest first.
+
+### Endpoint
+
+```http
+GET /api/v1/notifications
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "notification_id": "NOT001",
+      "user_id": "USR001",
+      "title": "Payment Accepted",
+      "message": "Your payment of 50,000.00 to Chipiku Plus has been accepted. You can now proceed to checkout.",
+      "category": "Payment",
+      "is_read": false,
+      "created_at": "2026-07-27T08:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## Mark Notification as Read
+
+Marks a single notification as read.
+
+### Endpoint
+
+```http
+PATCH /api/v1/notifications/{notification_id}/read
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Notification marked as read.",
+  "data": {
+    "notification_id": "NOT001",
+    "is_read": true
+  }
+}
+```
+
+---
+
+## Mark All Notifications as Read
+
+Marks all unread notifications for the authenticated user as read.
+
+### Endpoint
+
+```http
+PATCH /api/v1/notifications/read-all
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "All notifications marked as read."
+}
+```
+
+---
+
+# 8. User Profile
 
 ## Get User Profile
 
@@ -428,7 +601,7 @@ PUT /api/v1/profile
 
 ---
 
-# 8. Admin Dashboard
+# 9. Admin Dashboard
 
 Admin endpoints require JWT authentication and an account with the `admin` role.
 
@@ -443,7 +616,7 @@ Unauthorized or non-admin requests return:
 
 ---
 
-## 8.1 Change Merchant Status
+## 9.1 Change Merchant Status
 
 Updates a merchant's verification status.
 
@@ -491,7 +664,7 @@ PATCH /api/v1/admin/merchants/{merchant_id}/status
 
 ---
 
-## 8.2 Deactivate and Activate Accounts
+## 9.2 Deactivate and Activate Accounts
 
 Activates or deactivates a user account. Deactivated accounts cannot log in or access protected endpoints.
 
@@ -568,7 +741,7 @@ PATCH /api/v1/admin/users/{user_id}/activate
 
 ---
 
-## 8.3 Warning Notifications
+## 9.3 Warning Notifications
 
 Sends a warning notification to a user. The notification is stored and delivered to the target account.
 
@@ -651,7 +824,7 @@ GET /api/v1/admin/warnings
 
 ---
 
-## 8.4 Support and Complaints
+## 9.4 Support and Complaints
 
 Allows admins to list, view, and resolve user support tickets and complaints.
 
@@ -779,7 +952,7 @@ PATCH /api/v1/admin/support/{ticket_id}
 
 ---
 
-# 9. Security Features
+# 10. Security Features
 
 KayaRemit API implements security practices including:
 

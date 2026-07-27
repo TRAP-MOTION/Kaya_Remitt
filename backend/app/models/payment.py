@@ -11,6 +11,14 @@ def generate_transaction_reference():
     return f"TXN-{uuid.uuid4().hex[:12].upper()}"
 
 
+# Payment status lifecycle:
+# AwaitingAcceptance → merchant notified; awaiting accept/deny
+# Accepted           → merchant approved; user can start checkout
+# Denied             → merchant rejected; checkout blocked
+# Pending            → checkout initiated; awaiting PayChangu payment
+# COMPLETED          → PayChangu verified; voucher can be issued
+
+
 class Payment(db.Model):
     __tablename__ = "payments"
 
@@ -32,7 +40,7 @@ class Payment(db.Model):
     )
     beneficiary_name = db.Column(db.String(100), nullable=False)
     amount = db.Column(db.Numeric(12, 2), nullable=False)
-    payment_status = db.Column(db.String(20), nullable=False, default="Pending")
+    payment_status = db.Column(db.String(20), nullable=False, default="AwaitingAcceptance")
     transaction_reference = db.Column(
         db.String(100), unique=True, nullable=False, default=generate_transaction_reference
     )
