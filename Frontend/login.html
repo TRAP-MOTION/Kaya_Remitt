@@ -41,46 +41,9 @@
       display: inline-block;
     }
 
-    .header-text { text-align: center; margin-bottom: 24px; }
+    .header-text { text-align: center; margin-bottom: 28px; }
     .header-text h1 { font-size: 24px; font-weight: 800; color: #111827; margin-bottom: 4px; }
     .header-text p { color: #6b7280; font-size: 14px; }
-
-    /* Role Selector */
-    .role-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #6b7280;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: block;
-    }
-
-    .role-selector {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 18px;
-    }
-
-    .role-btn {
-      flex: 1;
-      padding: 10px 6px;
-      border: 2px solid #e5e7eb;
-      background: #f9fafb;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #4b5563;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.2s ease;
-    }
-
-    .role-btn.active {
-      border-color: #00C853;
-      background: #e8f5e9;
-      color: #00c853;
-    }
 
     /* Input Fields */
     .input-group {
@@ -209,16 +172,14 @@
       </div>
 
       <form id="loginForm" onsubmit="handleLogin(event)">
-        <input type="hidden" id="selectedRole" value="user">
-
         <div class="input-group">
           <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-          <input type="email" placeholder="Email Address" required>
+          <input type="email" id="loginEmail" placeholder="Email Address" required>
         </div>
 
         <div class="input-group">
           <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z"/></svg>
-          <input type="password" placeholder="Password" required>
+          <input type="password" id="loginPassword" placeholder="Password" required>
         </div>
 
         <button type="submit" class="signin-btn">SIGN IN</button>
@@ -236,29 +197,10 @@
   </div>
 
   <script>
-    function setRole(role) {
-      document.getElementById('selectedRole').value = role;
-      
-      document.getElementById('btnUser').classList.remove('active');
-      document.getElementById('btnMerchant').classList.remove('active');
-      document.getElementById('btnAdmin').classList.remove('active');
-
-      if (role === 'user') document.getElementById('btnUser').classList.add('active');
-      if (role === 'merchant') document.getElementById('btnMerchant').classList.add('active');
-      if (role === 'admin') document.getElementById('btnAdmin').classList.add('active');
-    }
-
     function handleLogin(e) {
       e.preventDefault();
-      const role = document.getElementById('selectedRole').value;
-
-      if (role === 'merchant') {
-        window.location.href = 'merchant-dashboard.html';
-      } else if (role === 'admin') {
-        window.location.href = 'admin-dashboard.html';
-      } else {
-        window.location.href = 'dashboard.html';
-      }
+      // Directly routes to main dashboard (Backend authentication will decide role-based access later)
+      window.location.href = 'dashboard.html';
     }
   </script>
 </body>
