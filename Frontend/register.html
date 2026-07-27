@@ -211,44 +211,85 @@
           <input type="text" id="businessNameInput" placeholder="Business / Store Name">
         </div>
 
-        <button type="submit" class="register-btn">Register Account</button>
+        <button type="submit" class="register-btn" id="registerSubmitBtn">Register Account</button>
       </form>
+      <p id="registerError" style="display:none;color:#b91c1c;font-size:13px;margin-top:12px;"></p>
+      <p id="registerSuccess" style="display:none;color:#15803d;font-size:13px;margin-top:12px;"></p>
     </div>
   </div>
 
+  <script src="services/api.js"></script>
   <script>
     function setRole(role) {
-      document.getElementById('selectedRole').value = role;
-      
-      const btnUser = document.getElementById('btnUser');
-      const btnMerchant = document.getElementById('btnMerchant');
+      document.getElementById("selectedRole").value = role;
 
-      if (btnUser) btnUser.classList.remove('active');
-      if (btnMerchant) btnMerchant.classList.remove('active');
+      const btnUser = document.getElementById("btnUser");
+      const btnMerchant = document.getElementById("btnMerchant");
 
-      if (role === 'user' && btnUser) btnUser.classList.add('active');
-      if (role === 'merchant' && btnMerchant) btnMerchant.classList.add('active');
+      if (btnUser) btnUser.classList.remove("active");
+      if (btnMerchant) btnMerchant.classList.remove("active");
 
-      const merchantField = document.getElementById('merchantField');
-      const businessInput = document.getElementById('businessNameInput');
-      
-      if (role === 'merchant') {
-        merchantField.style.display = 'flex';
-        businessInput.setAttribute('required', 'true');
+      if (role === "user" && btnUser) btnUser.classList.add("active");
+      if (role === "merchant" && btnMerchant) btnMerchant.classList.add("active");
+
+      const merchantField = document.getElementById("merchantField");
+      const businessInput = document.getElementById("businessNameInput");
+
+      if (role === "merchant") {
+        merchantField.style.display = "flex";
+        businessInput.setAttribute("required", "true");
       } else {
-        merchantField.style.display = 'none';
-        businessInput.removeAttribute('required');
+        merchantField.style.display = "none";
+        businessInput.removeAttribute("required");
       }
     }
 
-    function handleRegister(e) {
+    async function handleRegister(e) {
       e.preventDefault();
-      const role = document.getElementById('selectedRole').value;
+      const errorEl = document.getElementById("registerError");
+      const successEl = document.getElementById("registerSuccess");
+      const submitBtn = document.getElementById("registerSubmitBtn");
+      errorEl.style.display = "none";
+      successEl.style.display = "none";
 
-      if (role === 'merchant') {
-        window.location.href = 'merchant-dashboard.html';
-      } else {
-        window.location.href = 'dashboard.html';
+      const uiRole = document.getElementById("selectedRole").value;
+      const apiRole = uiRole === "merchant" ? "merchant" : "diaspora";
+      const payload = {
+        full_name: document.getElementById("fullName").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        password: document.getElementById("password").value,
+        role: apiRole,
+      };
+
+      // Business name is collected for UX; merchant profiles are verified separately by admin.
+      if (apiRole === "merchant") {
+        const businessName = document.getElementById("businessNameInput").value.trim();
+        if (!businessName) {
+          errorEl.textContent = "Business / Store Name is required for merchants.";
+          errorEl.style.display = "block";
+          return;
+        }
+        localStorage.setItem("pending_business_name", businessName);
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Creating account…";
+
+      try {
+        await AuthAPI.register(payload);
+        // Auto-login after successful registration
+        const { user } = await AuthAPI.loginAndStore({
+          email: payload.email,
+          password: payload.password,
+        });
+        successEl.textContent = "Account created. Redirecting…";
+        successEl.style.display = "block";
+        window.location.href = Session.dashboardForRole(user.role);
+      } catch (err) {
+        errorEl.textContent = err.message || "Registration failed.";
+        errorEl.style.display = "block";
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Register Account";
       }
     }
   </script>

@@ -54,14 +54,14 @@
 
         <!-- User Profile & Logout -->
         <div class="flex items-center space-x-3">
-          <div class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-sm border border-brand-200">
-            IK
+          <div id="navAvatar" class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-sm border border-brand-200">
+            —
           </div>
           <div class="hidden sm:block text-left text-xs">
-            <p class="font-bold text-gray-800">Sender Account</p>
+            <p id="navUserName" class="font-bold text-gray-800">Sender Account</p>
             <p class="text-gray-500">Verified User</p>
           </div>
-          <a href="login.html" class="text-xs text-gray-500 hover:text-red-600 font-semibold ml-2 border-l pl-3">Logout</a>
+          <button type="button" onclick="Session.logout()" class="text-xs text-gray-500 hover:text-red-600 font-semibold ml-2 border-l pl-3">Logout</button>
         </div>
 
       </div>
@@ -115,8 +115,8 @@
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div class="p-5 border-b border-gray-100 flex justify-between items-center">
             <div>
-              <h2 class="text-base font-bold text-gray-900">Your Issued Vouchers</h2>
-              <p class="text-xs text-gray-500">Track redemption codes and status of sent remittances</p>
+              <h2 class="text-base font-bold text-gray-900">Your Payments & Vouchers</h2>
+              <p class="text-xs text-gray-500">Track payment status, checkout, and issued vouchers</p>
             </div>
           </div>
 
@@ -124,11 +124,11 @@
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase border-b border-gray-200">
-                  <th class="p-4">Recipient Email</th>
-                  <th class="p-4">Category</th>
+                  <th class="p-4">Merchant</th>
+                  <th class="p-4">Beneficiary</th>
                   <th class="p-4">Amount</th>
-                  <th class="p-4">Voucher Code</th>
-                  <th class="p-4 text-right">Status</th>
+                  <th class="p-4">Status</th>
+                  <th class="p-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody id="vouchersTableBody" class="divide-y divide-gray-100 text-xs font-medium">
@@ -136,8 +136,8 @@
                 <tr id="emptyStateRow">
                   <td colspan="5" class="p-8 text-center text-gray-400">
                     <div class="flex flex-col items-center justify-center space-y-1">
-                      <p class="font-semibold text-gray-500">No vouchers created yet</p>
-                      <p class="text-[11px]">Click "Send New Voucher" to send your first remittance.</p>
+                      <p class="font-semibold text-gray-500">No payments yet</p>
+                      <p class="text-[11px]">Click "Send New Voucher" to create your first payment request.</p>
                     </div>
                   </td>
                 </tr>
@@ -156,18 +156,28 @@
           <div class="space-y-4 text-xs text-gray-600">
             <div class="flex gap-3 items-start">
               <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center shrink-0">1</span>
-              <p><strong class="text-gray-800">Select Purpose:</strong> Choose specific categories like Groceries, School Fees, or Healthcare.</p>
+              <p><strong class="text-gray-800">Choose merchant &amp; service:</strong> Pick a verified merchant and the service you want to fund.</p>
             </div>
 
             <div class="flex gap-3 items-start">
               <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center shrink-0">2</span>
-              <p><strong class="text-gray-800">Instant Email Delivery:</strong> The recipient receives a unique digital code via email.</p>
+              <p><strong class="text-gray-800">Merchant approval:</strong> The merchant accepts or denies your payment request.</p>
             </div>
 
             <div class="flex gap-3 items-start">
               <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center shrink-0">3</span>
-              <p><strong class="text-gray-800">Merchant Redemption:</strong> Recipient presents the code at partner stores for verified goods/services.</p>
+              <p><strong class="text-gray-800">Checkout &amp; voucher:</strong> Pay via PayChangu, then generate a redeemable digital voucher.</p>
             </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+            <h2 class="text-base font-bold text-gray-900">Notifications</h2>
+            <button type="button" onclick="markAllNotificationsRead()" class="text-[11px] font-bold text-brand-600 hover:text-brand-700">Mark all read</button>
+          </div>
+          <div id="notificationsList" class="space-y-2 text-xs text-gray-600 max-h-64 overflow-y-auto">
+            <p class="text-gray-400">No notifications yet.</p>
           </div>
         </div>
       </div>
@@ -176,108 +186,302 @@
 
   </main>
 
-  <!-- SEND VOUCHER MODAL -->
+  <!-- CREATE PAYMENT MODAL -->
   <div id="sendVoucherModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
       <div class="flex justify-between items-center border-b border-gray-100 pb-3">
-        <h3 class="font-bold text-gray-900 text-base">Create & Send Remittance Voucher</h3>
+        <h3 class="font-bold text-gray-900 text-base">Create Payment Request</h3>
         <button onclick="closeModal('sendVoucherModal')" class="text-gray-400 hover:text-gray-600 font-bold text-lg">&times;</button>
       </div>
 
       <form id="voucherForm" onsubmit="handleSendVoucher(event)" class="space-y-4 text-xs">
         <div>
-          <label class="block font-semibold text-gray-700 mb-1">Recipient Email Address</label>
-          <input type="email" id="recipientEmail" required placeholder="recipient@domain.com" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500" />
-        </div>
-
-        <div>
-          <label class="block font-semibold text-gray-700 mb-1">Category / Purpose</label>
-          <select id="voucherCategory" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500">
-            <option>Groceries & Supermarket</option>
-            <option>Education & School Fees</option>
-            <option>Healthcare & Pharmacy</option>
-            <option>Building & Hardware</option>
+          <label class="block font-semibold text-gray-700 mb-1">Merchant</label>
+          <select id="paymentMerchant" required class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500">
+            <option value="">Loading merchants…</option>
           </select>
         </div>
 
         <div>
-          <label class="block font-semibold text-gray-700 mb-1">Voucher Amount (MWK)</label>
-          <input type="number" id="voucherAmount" required min="1000" placeholder="e.g. 50000" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500" />
+          <label class="block font-semibold text-gray-700 mb-1">Service</label>
+          <select id="paymentService" required class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500">
+            <option value="">Select a merchant first</option>
+          </select>
         </div>
 
         <div>
-          <label class="block font-semibold text-gray-700 mb-1">Personal Note (Optional)</label>
-          <textarea id="personalNote" rows="2" placeholder="Add a short message for the recipient..." class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500"></textarea>
+          <label class="block font-semibold text-gray-700 mb-1">Beneficiary Name</label>
+          <input type="text" id="beneficiaryName" required placeholder="e.g. Mary Banda" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500" />
         </div>
+
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Amount (MWK)</label>
+          <input type="number" id="voucherAmount" required min="1" step="0.01" placeholder="e.g. 50000" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500" />
+        </div>
+
+        <p id="paymentFormError" class="hidden text-red-600"></p>
 
         <div class="flex justify-end gap-2 pt-2">
           <button type="button" onclick="closeModal('sendVoucherModal')" class="px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">Cancel</button>
-          <button type="submit" class="px-4 py-2 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700">Issue Voucher</button>
+          <button type="submit" id="paymentSubmitBtn" class="px-4 py-2 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700">Submit Request</button>
         </div>
       </form>
     </div>
   </div>
 
+  <script src="services/api.js"></script>
   <script>
-    let activeVouchers = 0;
-    let totalRemitted = 0;
+    let merchantsCache = [];
 
     function openModal(id) {
-      document.getElementById(id).classList.remove('hidden');
-      document.getElementById(id).classList.add('flex');
+      document.getElementById(id).classList.remove("hidden");
+      document.getElementById(id).classList.add("flex");
     }
 
     function closeModal(id) {
-      document.getElementById(id).classList.add('hidden');
-      document.getElementById(id).classList.remove('flex');
+      document.getElementById(id).classList.add("hidden");
+      document.getElementById(id).classList.remove("flex");
     }
 
-    function generateVoucherCode() {
-      const randomDigits = Math.floor(100000 + Math.random() * 900000);
-      return `KR-${randomDigits}`;
+    function statusBadge(status) {
+      const map = {
+        AwaitingAcceptance: "bg-amber-50 text-amber-700 border-amber-200",
+        Accepted: "bg-blue-50 text-blue-700 border-blue-200",
+        Pending: "bg-indigo-50 text-indigo-700 border-indigo-200",
+        COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        Denied: "bg-red-50 text-red-700 border-red-200",
+      };
+      const cls = map[status] || "bg-gray-50 text-gray-700 border-gray-200";
+      return `<span class="inline-block px-2.5 py-1 border rounded-full text-[10px] font-bold ${cls}">${status}</span>`;
     }
 
-    function handleSendVoucher(e) {
+    function paymentActions(payment) {
+      const id = payment.payment_id;
+      if (payment.status === "Accepted") {
+        return `<button type="button" onclick="startCheckout('${id}')" class="text-brand-700 font-bold hover:underline">Checkout</button>`;
+      }
+      if (payment.status === "Pending" || payment.status === "COMPLETED") {
+        return `<button type="button" onclick="issueVoucher('${id}')" class="text-brand-700 font-bold hover:underline">Get voucher</button>`;
+      }
+      return "—";
+    }
+
+    async function loadMerchants() {
+      const select = document.getElementById("paymentMerchant");
+      try {
+        const res = await MerchantAPI.getAll();
+        merchantsCache = res.data || [];
+        if (!merchantsCache.length) {
+          select.innerHTML = '<option value="">No verified merchants available</option>';
+          return;
+        }
+        select.innerHTML =
+          '<option value="">Select merchant</option>' +
+          merchantsCache
+            .map(
+              (m) =>
+                `<option value="${m.merchant_id}">${m.business_name || m.name || m.merchant_id}</option>`
+            )
+            .join("");
+      } catch (err) {
+        select.innerHTML = `<option value="">${err.message}</option>`;
+      }
+    }
+
+    async function onMerchantChange() {
+      const merchantId = document.getElementById("paymentMerchant").value;
+      const serviceSelect = document.getElementById("paymentService");
+      if (!merchantId) {
+        serviceSelect.innerHTML = '<option value="">Select a merchant first</option>';
+        return;
+      }
+      serviceSelect.innerHTML = '<option value="">Loading services…</option>';
+      try {
+        const res = await MerchantAPI.getServices(merchantId);
+        const services = res.data || [];
+        if (!services.length) {
+          serviceSelect.innerHTML = '<option value="">No services for this merchant</option>';
+          return;
+        }
+        serviceSelect.innerHTML =
+          '<option value="">Select service</option>' +
+          services
+            .map((s) => {
+              const id = s.service_id;
+              const name = s.service_name || s.name || id;
+              const price = s.price != null ? ` — MWK ${Number(s.price).toLocaleString()}` : "";
+              return `<option value="${id}" data-price="${s.price || ""}">${name}${price}</option>`;
+            })
+            .join("");
+      } catch (err) {
+        serviceSelect.innerHTML = `<option value="">${err.message}</option>`;
+      }
+    }
+
+    async function loadPayments() {
+      const tbody = document.getElementById("vouchersTableBody");
+      try {
+        const res = await PaymentAPI.history();
+        const payments = res.data || [];
+        const active = payments.filter((p) =>
+          ["AwaitingAcceptance", "Accepted", "Pending"].includes(p.status)
+        ).length;
+        const remitted = payments
+          .filter((p) => p.status === "COMPLETED")
+          .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+        document.getElementById("activeVouchersCount").textContent = active;
+        document.getElementById("totalRemittedAmount").textContent =
+          `MWK ${remitted.toLocaleString()}`;
+
+        if (!payments.length) {
+          tbody.innerHTML = `
+            <tr id="emptyStateRow">
+              <td colspan="5" class="p-8 text-center text-gray-400">
+                <p class="font-semibold text-gray-500">No payments yet</p>
+                <p class="text-[11px]">Click "Send New Voucher" to create your first payment request.</p>
+              </td>
+            </tr>`;
+          return;
+        }
+
+        tbody.innerHTML = payments
+          .map(
+            (p) => `
+          <tr class="hover:bg-gray-50 transition">
+            <td class="p-4 font-semibold text-gray-800">${p.merchant || "—"}</td>
+            <td class="p-4 text-gray-600">${p.beneficiary_name || "—"}</td>
+            <td class="p-4 font-bold text-gray-900">MWK ${Number(p.amount || 0).toLocaleString()}</td>
+            <td class="p-4">${statusBadge(p.status)}</td>
+            <td class="p-4 text-right">${paymentActions(p)}</td>
+          </tr>`
+          )
+          .join("");
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-600">${err.message}</td></tr>`;
+      }
+    }
+
+    async function loadNotifications() {
+      const list = document.getElementById("notificationsList");
+      try {
+        const res = await NotificationAPI.list();
+        const notes = res.data || [];
+        if (!notes.length) {
+          list.innerHTML = '<p class="text-gray-400">No notifications yet.</p>';
+          return;
+        }
+        list.innerHTML = notes
+          .slice(0, 10)
+          .map(
+            (n) => `
+          <button type="button" onclick="markNotificationRead('${n.notification_id}')"
+            class="w-full text-left p-2 rounded-lg border ${n.is_read ? "border-gray-100 bg-gray-50" : "border-brand-100 bg-brand-50"} hover:bg-gray-50">
+            <p class="font-bold text-gray-800">${n.title}</p>
+            <p class="text-gray-600 mt-0.5">${n.message}</p>
+          </button>`
+          )
+          .join("");
+      } catch (err) {
+        list.innerHTML = `<p class="text-red-600">${err.message}</p>`;
+      }
+    }
+
+    async function markNotificationRead(id) {
+      try {
+        await NotificationAPI.markRead(id);
+        await loadNotifications();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function markAllNotificationsRead() {
+      try {
+        await NotificationAPI.markAllRead();
+        await loadNotifications();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function handleSendVoucher(e) {
       e.preventDefault();
+      const errorEl = document.getElementById("paymentFormError");
+      const submitBtn = document.getElementById("paymentSubmitBtn");
+      errorEl.classList.add("hidden");
+      submitBtn.disabled = true;
 
-      const email = document.getElementById('recipientEmail').value;
-      const category = document.getElementById('voucherCategory').value;
-      const amount = parseFloat(document.getElementById('voucherAmount').value);
-      const code = generateVoucherCode();
-
-      // Remove empty state if present
-      const emptyRow = document.getElementById('emptyStateRow');
-      if (emptyRow) emptyRow.remove();
-
-      // Append new row to table
-      const tbody = document.getElementById('vouchersTableBody');
-      const newRow = document.createElement('tr');
-      newRow.className = 'hover:bg-gray-50 transition';
-      newRow.innerHTML = `
-        <td class="p-4 font-semibold text-gray-800">${email}</td>
-        <td class="p-4 text-gray-600">${category}</td>
-        <td class="p-4 font-bold text-gray-900">MWK ${amount.toLocaleString()}</td>
-        <td class="p-4 font-mono text-brand-700 font-bold">${code}</td>
-        <td class="p-4 text-right">
-          <span class="inline-block px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-[10px] font-bold">
-            Pending
-          </span>
-        </td>
-      `;
-      tbody.prepend(newRow);
-
-      // Update counters
-      activeVouchers += 1;
-      totalRemitted += amount;
-
-      document.getElementById('activeVouchersCount').textContent = activeVouchers;
-      document.getElementById('totalRemittedAmount').textContent = `MWK ${totalRemitted.toLocaleString()}`;
-
-      // Reset and close
-      document.getElementById('voucherForm').reset();
-      closeModal('sendVoucherModal');
-      alert(`Voucher (${code}) issued successfully!`);
+      try {
+        await PaymentAPI.create({
+          merchant_id: document.getElementById("paymentMerchant").value,
+          service_id: document.getElementById("paymentService").value,
+          beneficiary_name: document.getElementById("beneficiaryName").value.trim(),
+          amount: Number(document.getElementById("voucherAmount").value),
+        });
+        document.getElementById("voucherForm").reset();
+        closeModal("sendVoucherModal");
+        await loadPayments();
+        await loadNotifications();
+        alert("Payment request submitted. Awaiting merchant approval.");
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.classList.remove("hidden");
+      } finally {
+        submitBtn.disabled = false;
+      }
     }
+
+    async function startCheckout(paymentId) {
+      try {
+        const res = await PaymentAPI.checkout(paymentId);
+        const url = res.data?.checkout_url;
+        await loadPayments();
+        if (url) {
+          window.location.href = url;
+        } else {
+          alert("Checkout started, but no checkout URL was returned.");
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function issueVoucher(paymentId) {
+      try {
+        const res = await VoucherAPI.generate(paymentId);
+        const code = res.data?.voucher_code || res.data?.voucher_id || "issued";
+        await loadPayments();
+        await loadNotifications();
+        alert(`Voucher ready: ${code}`);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function initDashboard() {
+      if (!Session.requireRole("diaspora")) return;
+
+      const user = Session.getUser();
+      if (user) {
+        document.getElementById("navUserName").textContent = user.full_name || "Sender";
+        const initials = (user.full_name || "U")
+          .split(" ")
+          .map((p) => p[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase();
+        document.getElementById("navAvatar").textContent = initials;
+      }
+
+      document
+        .getElementById("paymentMerchant")
+        .addEventListener("change", onMerchantChange);
+
+      await Promise.all([loadMerchants(), loadPayments(), loadNotifications()]);
+    }
+
+    initDashboard();
   </script>
 </body>
 </html>

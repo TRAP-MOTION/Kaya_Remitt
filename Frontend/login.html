@@ -182,7 +182,9 @@
           <input type="password" id="loginPassword" placeholder="Password" required>
         </div>
 
-        <button type="submit" class="signin-btn">SIGN IN</button>
+        <p id="loginError" style="display:none;color:#b91c1c;font-size:13px;margin:0 0 12px;text-align:left;"></p>
+
+        <button type="submit" class="signin-btn" id="loginSubmitBtn">SIGN IN</button>
       </form>
 
       <p class="forgot">Forgot your password?</p>
@@ -196,11 +198,34 @@
     </div>
   </div>
 
+  <script src="services/api.js"></script>
   <script>
-    function handleLogin(e) {
+    if (Session.isAuthenticated()) {
+      const user = Session.getUser();
+      window.location.href = Session.dashboardForRole(user?.role);
+    }
+
+    async function handleLogin(e) {
       e.preventDefault();
-      // Directly routes to main dashboard (Backend authentication will decide role-based access later)
-      window.location.href = 'dashboard.html';
+      const errorEl = document.getElementById("loginError");
+      const submitBtn = document.getElementById("loginSubmitBtn");
+      errorEl.style.display = "none";
+      errorEl.textContent = "";
+      submitBtn.disabled = true;
+      submitBtn.textContent = "SIGNING IN…";
+
+      try {
+        const { user } = await AuthAPI.loginAndStore({
+          email: document.getElementById("loginEmail").value.trim(),
+          password: document.getElementById("loginPassword").value,
+        });
+        window.location.href = Session.dashboardForRole(user.role);
+      } catch (err) {
+        errorEl.textContent = err.message || "Login failed.";
+        errorEl.style.display = "block";
+        submitBtn.disabled = false;
+        submitBtn.textContent = "SIGN IN";
+      }
     }
   </script>
 </body>
