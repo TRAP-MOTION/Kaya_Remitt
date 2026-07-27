@@ -1,7 +1,12 @@
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load backend/.env regardless of the process working directory (e.g. gunicorn from repo root).
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(_BACKEND_DIR / ".env")
+load_dotenv()  # also allow a root-level .env to override
 
 
 def _fix_postgres_url(url: str | None) -> str | None:
