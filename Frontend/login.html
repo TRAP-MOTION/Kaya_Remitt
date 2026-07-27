@@ -208,13 +208,6 @@
         <p>to continue with KayaRemit</p>
       </div>
 
-      <span class="role-label">Sign in as:</span>
-      <div class="role-selector">
-        <button type="button" class="role-btn active" id="btnUser" onclick="setRole('user')"> Sender</button>
-        <button type="button" class="role-btn" id="btnMerchant" onclick="setRole('merchant')"> Merchant</button>
-        <button type="button" class="role-btn" id="btnAdmin" onclick="setRole('admin')"> Admin</button>
-      </div>
-
       <form id="loginForm" onsubmit="handleLogin(event)">
         <input type="hidden" id="selectedRole" value="user">
 

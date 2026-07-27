@@ -190,6 +190,12 @@
     <div class="content">
       <h2>Create Account</h2>
 
+      <span class="role-label">Registering as:</span>
+      <div class="role-selector">
+        <button type="button" class="role-btn active" id="btnUser" onclick="setRole('user')"> Sender</button>
+        <button type="button" class="role-btn" id="btnMerchant" onclick="setRole('merchant')"> Merchant</button>
+      </div>
+
       <form id="registerForm" onsubmit="handleRegister(event)">
         <input type="hidden" id="selectedRole" value="user">
 
