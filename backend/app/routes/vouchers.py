@@ -37,13 +37,25 @@ def _ensure_payment_completed(payment: Payment, user_id: str) -> tuple[bool, str
     """
     Ensure payment is COMPLETED before issuing a voucher.
 
-    Pending payments are verified with PayChangu on voucher create only.
+    Pending payments (checkout initiated) are verified with PayChangu on voucher create.
     """
     if payment.payment_status == "COMPLETED":
         return True, None
 
+    if payment.payment_status == "Denied":
+        return False, "This payment was denied by the merchant."
+
+    if payment.payment_status == "AwaitingAcceptance":
+        return False, "This payment is still awaiting merchant approval."
+
+    if payment.payment_status == "Accepted":
+        return False, "Checkout has not been started yet. Start checkout and try again."
+
     if payment.payment_status != "Pending":
-        return False, "A voucher can only be generated for a completed payment."
+        return False, (
+            "A voucher can only be generated after checkout is completed. "
+            f"Current status: {payment.payment_status}."
+        )
 
     try:
         paid = verify_checkout(payment)
@@ -68,6 +80,7 @@ def _ensure_payment_completed(payment: Payment, user_id: str) -> tuple[bool, str
             f"Your payment of {float(payment.amount):,.2f} "
             f"({payment.transaction_reference}) was verified successfully."
         ),
+        category="Payment",
     ))
     return True, None
 

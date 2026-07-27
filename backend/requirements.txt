@@ -9,3 +9,4 @@ gunicorn
 paychangu
 pyjwt
 pytest
+psycopg2-binary

@@ -35,6 +35,7 @@ class Notification(db.Model):
             "user_id": self.user_id,
             "title": self.title,
             "message": self.message,
+            "category": self.category,
             "is_read": self.is_read,
             "created_at": formatted_date,
         }

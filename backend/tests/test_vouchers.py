@@ -62,6 +62,58 @@ def test_generate_voucher_verifies_pending_payment(
     assert simulated_tx.status == "SIMULATED"
 
 
+def test_generate_voucher_awaiting_acceptance_blocked(
+    client, diaspora_headers, db_session, diaspora_user, sample_merchant
+):
+    """Voucher cannot be generated while payment awaits merchant approval."""
+    merchant = sample_merchant["merchant"]
+    service = sample_merchant["service"]
+    payment = Payment(
+        user_id=diaspora_user.user_id,
+        merchant_id=merchant.merchant_id,
+        service_id=service.service_id,
+        beneficiary_name="Mary Banda",
+        amount=50000.00,
+        payment_status="AwaitingAcceptance",
+    )
+    db_session.add(payment)
+    db_session.commit()
+
+    response = client.post(
+        "/api/v1/vouchers",
+        json={"payment_id": payment.payment_id},
+        headers=diaspora_headers,
+    )
+    assert response.status_code == 400
+    assert "awaiting merchant approval" in response.get_json()["message"].lower()
+
+
+def test_generate_voucher_accepted_without_checkout_blocked(
+    client, diaspora_headers, db_session, diaspora_user, sample_merchant
+):
+    """Accepted but not checked-out payments cannot generate vouchers."""
+    merchant = sample_merchant["merchant"]
+    service = sample_merchant["service"]
+    payment = Payment(
+        user_id=diaspora_user.user_id,
+        merchant_id=merchant.merchant_id,
+        service_id=service.service_id,
+        beneficiary_name="Mary Banda",
+        amount=50000.00,
+        payment_status="Accepted",
+    )
+    db_session.add(payment)
+    db_session.commit()
+
+    response = client.post(
+        "/api/v1/vouchers",
+        json={"payment_id": payment.payment_id},
+        headers=diaspora_headers,
+    )
+    assert response.status_code == 400
+    assert "checkout" in response.get_json()["message"].lower()
+
+
 def test_generate_voucher_pending_unpaid(
     client, diaspora_headers, db_session, diaspora_user, sample_merchant
 ):
