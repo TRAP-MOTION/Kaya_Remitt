@@ -1,158 +1,322 @@
 # KayaRemit
 
-KayaRemit is a secure web-based Direct-to-Merchant Digital Payment Platform designed to improve transparency and accountability in financial transactions across Malawi. Instead of sending unrestricted cash, users can pay verified merchants directly for goods and services on behalf of family members, friends, employees, or beneficiaries.
+KayaRemit is a secure web-based Direct-to-Merchant Digital Payment Platform that improves transparency and accountability in digital payments.
 
-The platform ensures that payments are used for their intended purpose by generating secure digital vouchers that are verified by merchants before goods or services are redeemed.
-
----
-
-## Problem Statement
-
-Many people send money for groceries, school fees, medical bills, utility payments, farming inputs, and construction materials. Once the money is transferred, there is often no assurance that it will be used as intended.
-
-This challenge affects both people living within Malawi and Malawians living abroad who support their families.
-
-KayaRemit addresses this problem by enabling users to pay verified merchants directly instead of transferring unrestricted cash.
+Instead of sending unrestricted cash, KayaRemit allows users to make payments directly to verified merchants for specific goods and services. The platform generates digital vouchers that merchants can verify before providing services, ensuring that payments are used for their intended purpose.
 
 ---
 
-## Solution
+# Problem Statement
 
-KayaRemit provides a secure digital payment platform where users can:
+Many individuals send money for essential needs such as groceries, education, healthcare, utilities, farming inputs, and construction materials. However, after funds are transferred, senders often have no visibility or assurance that the money was used as intended.
 
--Register and manage an account.
--Browse verified merchants.
--Select goods or services.
--Make direct merchant payments.
--Receive secure digital vouchers.
--Track payment history.
--Redeem vouchers through verified merchants.
+This creates challenges including:
+
+-Lack of transparency
+-Limited accountability
+-Risk of misuse
+-Reduced trust in digital payments
+
+KayaRemit solves this by connecting users directly with verified merchants instead of sending unrestricted cash.
 
 ---
 
-## Key Features
+# Solution
 
-### User Features
+KayaRemit provides a secure digital payment ecosystem where users can:
+
+-Create accounts
+-Browse verified merchants
+-Select available services
+-Make direct payments
+-Receive digital vouchers
+-Verify transactions
+-Track payment history
+
+---
+
+# Key Features
+
+## User Features
 
 -User Registration
 -Secure Login
--User Dashboard
--Profile Management
--Merchant Directory
+-User Profile Management
+-Merchant Discovery
 -Merchant Categories
--Service Catalogue
+-Service Selection
 -Direct Merchant Payments
 -Digital Voucher Generation
 -Transaction History
--Notifications
 
-### Merchant Features
+## Merchant Features
 
--Merchant Registration
--Business Profile Management
+-Merchant Dashboard
+-Merchant Profile Management
 -Service Management
 -Voucher Verification
--Payment History
+-Payment Tracking
 
-### Administrator Features
+## Administrator Features
 
 -User Management
--Merchant Approval
--Category Management
+-Merchant Management
 -Transaction Monitoring
--Platform Management
+-Platform Administration
 
 ---
 
-## Technology Stack
+# Technology Stack
 
-### Frontend
+## Frontend
 
 -HTML5
 -Tailwind CSS
 -JavaScript
 
-### Backend
+## Backend
 
 -Python
+-REST API
 
-### Database
+## Database
 
 -PostgreSQL
 
-### Version Control
+## Development Tools
 
 -Git
 -GitHub
 
----
+## Payment Integration
 
-## System Architecture
-
-The platform follows a three-tier architecture:
-
-Presentation Layer
--HTML
--Tailwind CSS
--JavaScript
-
-Application Layer
--Python REST API
--Business Logic
--Authentication
--Voucher Management
-
-Data Layer
--PostgreSQL Database
+-PayChangu Payment Utility
 
 ---
 
-## Project Structure
+# System Architecture
+
+KayaRemit follows a three-layer architecture:
 
 ```
-KayaRemit/
+                 Users
+                   |
+                   |
+          Frontend Layer
+     HTML + Tailwind + JavaScript
+                   |
+                   |
+              REST API
+                   |
+                   |
+          Backend Layer
+              Python
+                   |
+                   |
+        PostgreSQL Database
+```
+
+---
+
+# Project Structure
+
+```
+Kaya_Remitt-main/
+
 │
-├── frontend/
-│   ├── assets/
-│   ├── css/
-│   ├── js/
-│   ├── pages/
-│   └── index.html
+├── Frontend/
+│   ├── splash.html
+│   ├── onboarding1.html
+│   ├── onboarding2.html
+│   ├── onboarding3.html
+│   ├── login.html
+│   ├── register.html
+│   ├── dashboard.html
+│   ├── merchant-dashboard.html
+│   └── admin-dashboard.html
 │
 ├── backend/
+│   │
 │   ├── app/
-│   ├── api/
-│   ├── models/
-│   ├── routes/
-│   ├── services/
-│   ├── utils/
-│   └── main.py
-│
-├── database/
-│   └── schema.sql
+│   │   ├── models/
+│   │   │   ├── users.py
+│   │   │   ├── merchant.py
+│   │   │   ├── payment.py
+│   │   │   ├── voucher.py
+│   │   │   ├── transaction.py
+│   │   │   └── notification.py
+│   │   │
+│   │   ├── routes/
+│   │   │   ├── auth.py
+│   │   │   ├── user.py
+│   │   │   ├── merchants.py
+│   │   │   ├── payments.py
+│   │   │   └── vouchers.py
+│   │   │
+│   │   ├── schemas/
+│   │   ├── utils/
+│   │   └── config.py
+│   │
+│   ├── tests/
+│   ├── requirements.txt
+│   └── run.py
 │
 ├── docs/
-│   ├── API.md
-│   ├── DATABASE.md
-│   ├── ARCHITECTURE.md
-│   ├── BUSINESS_MODEL.md
-│   └── RESEARCH.pdf
+│   ├── research.md
+│   └── presentation.md
 │
-├── README.md
-└── LICENSE
+├── architecture.md
+└── README.md
 ```
 
 ---
 
-## Database
+# Installation
 
-PostgreSQL
+## Clone Repository
 
-Main Tables
+```bash
+git clone https://github.com/your-team/KayaRemit.git
+
+cd KayaRemit
+```
+
+---
+
+# Backend Setup
+
+Navigate to backend:
+
+```bash
+cd backend
+```
+
+Create virtual environment:
+
+```bash
+python -m venv venv
+```
+
+Activate environment:
+
+Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+Linux/macOS:
+
+```bash
+source venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+# Database Setup
+
+KayaRemit uses PostgreSQL.
+
+Create a PostgreSQL database and configure environment variables.
+
+Create a `.env` file using:
+
+```
+backend/.env.example
+```
+
+Required configuration:
+
+```
+DATABASE_URL=
+SECRET_KEY=
+```
+
+---
+
+# Running the Backend
+
+From the backend directory:
+
+```bash
+python run.py
+```
+
+The API server will start locally.
+
+---
+
+# Running the Frontend
+
+Open the frontend folder:
+
+```
+Frontend/
+```
+
+Launch:
+
+```
+splash.html
+```
+
+or run using a local development server.
+
+---
+
+# API Modules
+
+The backend provides REST endpoints for:
+
+-Authentication
+-User Management
+-Merchant Management
+-Payments
+-Voucher Generation
+-Transaction Management
+
+Full API documentation:
+
+```
+backend/api_reference.md
+```
+
+---
+
+# Testing
+
+The project includes automated backend tests.
+
+Run:
+
+```bash
+pytest
+```
+
+Test coverage includes:
+
+-Authentication
+-Users
+-Merchants
+-Payments
+-Vouchers
+-Validation
+
+---
+
+# Database Models
+
+Main entities:
 
 -Users
--Merchant Categories
 -Merchants
+-Merchant Categories
 -Services
 -Payments
 -Vouchers
@@ -161,63 +325,34 @@ Main Tables
 
 ---
 
-## Security
+# Future Improvements
 
-KayaRemit implements several security measures, including:
-
--Password Hashing
--JWT Authentication
--Role-Based Access Control
--Secure Voucher Verification
--Transaction Logging
--Unique Transaction References
--Input Validation
-
----
-
-## Future Enhancements
+Planned improvements:
 
 -Mobile Money Integration
 -Banking Integration
 -QR Code Payments
 -Mobile Application
 -SMS Notifications
--Email Notifications
 -Merchant Analytics
 -AI Fraud Detection
--Multi-Currency Support
--International Payment Support
 
 ---
 
-## Documentation
+# Project Status
 
-Project documentation includes:
+Current Version:
 
--Research Report
--API Documentation
--Database Design
--System Architecture
--Business Model
--Pitch Deck
+```
+MVP (Minimum Viable Product)
+```
 
----
+The prototype demonstrates the complete KayaRemit workflow:
 
-## Project Status
-
-Current Version: MVP (Minimum Viable Product)
-
-This prototype demonstrates the core functionality of KayaRemit, including secure authentication, merchant management, direct merchant payments, voucher generation, and transaction tracking.
+User Registration → Merchant Selection → Payment → Voucher Generation → Merchant Verification → Transaction Tracking
 
 ---
 
-## Team
+# License
 
- Frontend
-   -CSS
-   -HTML
-   -JavaScript
-
-Backend
-   -Python (Flask)
-
+This project is developed for innovation and educational purposes.
